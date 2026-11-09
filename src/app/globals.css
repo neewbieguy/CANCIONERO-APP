@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Tema claro */
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 225 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 225 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 10% 10%;
+    --primary: 217 90% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 225 10% 15%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 8% 42%;
+    --accent: 220 14% 92%;
+    --accent-foreground: 225 10% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 64% 38%;
+    --warning: 38 92% 48%;
+    --border: 220 13% 89%;
+    --input: 220 13% 87%;
+    --ring: 217 90% 53%;
+    --radius: 0.875rem;
+  }
+
+  /* Tema oscuro (por defecto) — fondo #0f1012, tarjetas #17181b, acento #1b6ef3 */
+  .dark {
+    --background: 225 9% 6.5%;
+    --foreground: 220 10% 95%;
+    --card: 228 8% 10%;
+    --card-foreground: 220 10% 95%;
+    --popover: 228 8% 11%;
+    --popover-foreground: 220 10% 95%;
+    --primary: 217 90% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 228 7% 15%;
+    --secondary-foreground: 220 10% 92%;
+    --muted: 228 7% 14%;
+    --muted-foreground: 220 6% 60%;
+    --accent: 228 7% 16%;
+    --accent-foreground: 220 10% 95%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 60% 45%;
+    --warning: 38 92% 55%;
+    --border: 228 7% 17%;
+    --input: 228 7% 19%;
+    --ring: 217 90% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

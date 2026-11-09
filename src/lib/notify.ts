@@ -1,0 +1,19 @@
+import "server-only";
+import { db } from "@/lib/db";
+import { publish, topics } from "@/lib/realtime";
+import { sendPushToUsers } from "@/lib/push";
+import type { NotificationType } from "@/lib/constants";
+
+/** Crea notificaciones en la campana (y push si está configurado) para varios usuarios. */
+export async function notifyUsers(
+  userIds: string[],
+  data: { type: NotificationType; title: string; body?: string; link?: string },
+) {
+  const unique = Array.from(new Set(userIds));
+  if (unique.length === 0) return;
+  await db.notification.createMany({
+    data: unique.map((userId) => ({ userId, type: data.type, title: data.title, body: data.body, link: data.link })),
+  });
+  for (const id of unique) publish(topics.user(id), { type: "notification" });
+  void sendPushToUsers(unique, { title: data.title, body: data.body, link: data.link }).catch(() => {});
+}
