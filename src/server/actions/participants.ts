@@ -5,7 +5,6 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { notifyUsers } from "@/lib/notify";
 import { can } from "@/lib/permissions";
-import { publish, topics } from "@/lib/realtime";
 import { requireTeamContext } from "@/lib/session";
 import { formatShortDate } from "@/lib/dates";
 
@@ -15,10 +14,9 @@ async function loadEvent(eventId: string, teamId: string) {
   return db.event.findFirst({ where: { id: eventId, teamId }, select: { id: true, title: true, date: true } });
 }
 
-function touch(teamId: string, eventId: string) {
+function touch(eventId: string) {
   revalidatePath("/", "layout");
   revalidatePath(`/eventos/${eventId}`);
-  publish(topics.team(teamId), { type: "refresh", scope: `event:${eventId}` });
 }
 
 export async function respondToEvent(eventId: string, status: "confirmed" | "declined"): Promise<Result> {
@@ -47,7 +45,7 @@ export async function respondToEvent(eventId: string, status: "confirmed" | "dec
       link: `/eventos/${eventId}`,
     },
   );
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }
 
@@ -86,7 +84,7 @@ export async function addParticipant(input: z.infer<typeof addSchema>): Promise<
       });
     }
   }
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }
 
@@ -96,7 +94,7 @@ export async function removeParticipant(eventId: string, userId: string): Promis
   const event = await loadEvent(eventId, ctx.team.id);
   if (!event) return { ok: false, error: "Evento no encontrado" };
   await db.eventParticipant.deleteMany({ where: { eventId, userId } });
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }
 
@@ -116,6 +114,6 @@ export async function setParticipantStatus(
     where: { eventId, userId },
     data: { status: parsed.data, respondedAt: parsed.data === "pending" ? null : new Date() },
   });
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }

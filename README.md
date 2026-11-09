@@ -2,7 +2,7 @@
 
 PWA para equipos de alabanza y bandas: eventos semanales, setlists, hojas de acordes con transposición, Modo Atril y notificaciones. UI en español.
 
-**Stack:** Next.js 14 (App Router) · TypeScript · Tailwind + shadcn/ui · Prisma + SQLite · NextAuth · Server-Sent Events · Serwist (PWA) · Vitest
+**Stack:** Next.js 14 (App Router) · TypeScript · Tailwind + shadcn/ui · Prisma + Postgres (Neon) · NextAuth · Serwist (PWA) · Web Push · Vitest. Publicada en Vercel.
 
 ## Correr en local
 
@@ -10,8 +10,8 @@ Requisitos: Node 20 o superior (probado con Node 26).
 
 ```bash
 npm install
-cp .env.example .env          # y completá NEXTAUTH_SECRET (openssl rand -base64 32)
-npx prisma migrate dev        # crea prisma/cancionero.db y corre el seed
+cp .env.example .env          # completá DATABASE_URL(_UNPOOLED) con la rama "dev" de Neon y NEXTAUTH_SECRET
+npx prisma migrate dev        # crea las tablas y corre el seed (datos de ejemplo)
 npm run dev                   # http://localhost:3000
 ```
 
@@ -43,23 +43,23 @@ Un usuario nuevo recibe automáticamente su propio equipo, del que es admin.
 - Cuando hay una versión nueva aparece un aviso "Nueva versión disponible".
 - Para instalarla desde el celular en la red local hace falta HTTPS (por ejemplo `npx next dev --experimental-https`, o un túnel como ngrok o Cloudflare Tunnel).
 
-## Notificaciones push y recordatorios
+## Notificaciones push
 
 - Generá las claves con `npx web-push generate-vapid-keys` y ponelas en `NEXT_PUBLIC_VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`.
-- Cada persona las activa por dispositivo en **Ajustes → Notificaciones**. Solo funcionan con la versión de producción (`npm run build && npm start`) porque necesitan el service worker. En iPhone/iPad hay que instalar la app primero.
-- **Recordatorios:** el día anterior a cada evento, los participantes reciben "Mañana: …". Con una sola instancia del servidor (local, Railway) se revisa solo cada 30 minutos (`src/instrumentation.ts`). En Vercel, configurá un Vercel Cron que llame a `/api/cron/recordatorios` (usa `CRON_SECRET`).
+- Cada persona las activa por dispositivo en **Ajustes → Notificaciones**. Solo funcionan con la versión de producción (`npm run build && npm start`, o publicada) porque necesitan el service worker. En iPhone/iPad hay que instalar la app primero.
 
-## Tiempo real
+## Actualizaciones entre miembros
 
-`/api/stream` abre un stream SSE por pestaña, usado por las notificaciones y para refrescar la pantalla cuando alguien del equipo cambia algo. El bus de eventos (`src/lib/realtime.ts`) vive en memoria, así que funciona con **una sola instancia** del servidor. Para escalar a varias instancias, reemplazá `publish`/`subscribe` por Pusher, Supabase Realtime o Redis.
+No hay conexión permanente (para que funcione en Vercel): la app refresca los datos cada 30 segundos mientras está abierta y cada vez que volvés a ella.
 
-## Migrar a Postgres
+## Publicar en Vercel + Neon
 
-1. En `prisma/schema.prisma` cambiá `provider = "sqlite"` por `"postgresql"`.
-2. Poné `DATABASE_URL="postgresql://..."`.
-3. Borrá `prisma/migrations` y corré `npx prisma migrate dev --name init`.
+1. En [vercel.com](https://vercel.com) entrá con GitHub e importá este repositorio.
+2. En el proyecto: **Storage → Create Database → Neon** (región São Paulo). Eso agrega `DATABASE_URL` y `DATABASE_URL_UNPOOLED`.
+3. En **Settings → Environment Variables** cargá: `NEXTAUTH_URL` (la URL de Vercel), `NEXTAUTH_SECRET`, `EMAIL_SERVER`, `EMAIL_FROM`, `ENABLE_DEMO_LOGIN=false` y las claves VAPID.
+4. **Deploy.** Cada build corre `prisma migrate deploy` (ver `vercel.json`), así que las tablas se crean solas. No se corre el seed: la base empieza vacía.
 
-Los "enums" se guardan como `String`, con los valores válidos en `src/lib/constants.ts`, así que no hace falta cambiar nada más.
+La zona horaria de las fechas se fija en `src/instrumentation.ts` (por defecto Argentina, configurable con `APP_TIMEZONE`).
 
 ## Estructura
 
@@ -69,9 +69,9 @@ public/icons/        íconos de la PWA
 scripts/             generación de íconos
 src/app/(auth)/      login
 src/app/(app)/       app autenticada (sidebar + header): inicio, eventos, canciones, …
-src/app/api/         NextAuth y stream SSE
+src/app/api/         NextAuth
 src/components/      ui (shadcn), layout, dashboard, events, team, pwa, …
-src/lib/             auth, db, sesión, permisos, realtime, notificaciones, música (ChordPro/transposición)
+src/lib/             auth, db, sesión, permisos, notificaciones, calendario, música (ChordPro/transposición)
 src/server/          server actions y queries
 tests/unit/          tests de Vitest
 ```
@@ -82,4 +82,5 @@ tests/unit/          tests de Vitest
 - [x] Etapa 2: equipos e invitaciones
 - [x] Etapa 3: eventos y setlists
 - [x] Etapa 4: canciones
-- [x] Etapa 5: calendario, push, recordatorios y ajustes
+- [x] Etapa 5: calendario, push y ajustes
+- [ ] Publicación en Vercel + Neon

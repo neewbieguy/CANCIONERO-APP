@@ -14,15 +14,13 @@ import {
   canGrantPermission,
   canRemoveMember,
 } from "@/lib/permissions";
-import { publish, topics } from "@/lib/realtime";
 import { requireTeamContext, requireUser } from "@/lib/session";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-/** Avisa a todas las pestañas del equipo que algo cambió en los miembros. */
-function refreshTeam(teamId: string) {
+/** Refresca los datos en caché después de un cambio en los miembros. */
+function refreshTeam() {
   revalidatePath("/", "layout");
-  publish(topics.team(teamId), { type: "refresh", scope: "members" });
 }
 
 async function findMember(teamId: string, userId: string) {
@@ -56,7 +54,7 @@ export async function setMemberPermission(input: z.infer<typeof permissionSchema
   if (!check.ok) return { ok: false, error: check.reason };
 
   await db.membership.update({ where: { id: target.id }, data: { [permission]: value } });
-  refreshTeam(ctx.team.id);
+  refreshTeam();
   return { ok: true };
 }
 
@@ -86,7 +84,7 @@ export async function changeMemberRole(input: { userId: string; role: string }):
       link: "/equipo",
     });
   }
-  refreshTeam(ctx.team.id);
+  refreshTeam();
   return { ok: true };
 }
 
@@ -107,7 +105,7 @@ export async function setMemberInstrument(input: { userId: string; instrument: s
   if (!target) return { ok: false, error: "Esa persona no es miembro del equipo" };
 
   await db.membership.update({ where: { id: target.id }, data: { instrument: parsed.data.instrument || null } });
-  refreshTeam(ctx.team.id);
+  refreshTeam();
   return { ok: true };
 }
 
@@ -141,8 +139,7 @@ export async function removeMember(userId: string): Promise<Result> {
   if (!isSelf) {
     await notifyUsers([userId], { type: "member_joined", title: `Ya no sos parte de ${ctx.team.name}` });
   }
-  publish(topics.user(userId), { type: "refresh", scope: "members" });
-  refreshTeam(ctx.team.id);
+  refreshTeam();
   return { ok: true };
 }
 
@@ -185,6 +182,6 @@ export async function acceptInvite(token: string): Promise<{ ok: true; teamName:
   }
 
   await db.user.update({ where: { id: user.id }, data: { currentTeamId: invite.teamId } });
-  refreshTeam(invite.teamId);
+  refreshTeam();
   return { ok: true, teamName: invite.team.name };
 }

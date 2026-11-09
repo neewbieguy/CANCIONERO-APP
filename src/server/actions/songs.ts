@@ -5,7 +5,6 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { toChordPro } from "@/lib/music/chordpro";
 import { can } from "@/lib/permissions";
-import { publish, topics } from "@/lib/realtime";
 import { requireTeamContext, type TeamContext } from "@/lib/session";
 import { tagsToCsv } from "@/lib/songs";
 
@@ -18,10 +17,9 @@ async function requireSongManager(): Promise<{ ok: true; ctx: TeamContext } | { 
   return { ok: true, ctx };
 }
 
-function touch(teamId: string, songId?: string) {
+function touch(songId?: string) {
   revalidatePath("/", "layout");
   if (songId) revalidatePath(`/canciones/${songId}`);
-  publish(topics.team(teamId), { type: "refresh", scope: songId ? `song:${songId}` : "songs" });
 }
 
 const songSchema = z.object({
@@ -68,7 +66,7 @@ export async function createSong(input: SongInput): Promise<{ ok: true; id: stri
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
   const song = await db.song.create({ data: { teamId: ctx.team.id, ...toData(parsed.data) } });
-  touch(ctx.team.id);
+  touch();
   return { ok: true, id: song.id };
 }
 
@@ -81,7 +79,7 @@ export async function updateSong(songId: string, input: SongInput): Promise<Resu
 
   const updated = await db.song.updateMany({ where: { id: songId, teamId: ctx.team.id }, data: toData(parsed.data) });
   if (updated.count === 0) return { ok: false, error: "Canción no encontrada" };
-  touch(ctx.team.id, songId);
+  touch(songId);
   return { ok: true };
 }
 
@@ -97,7 +95,7 @@ export async function deleteSong(songId: string): Promise<Result> {
     db.setlistItem.deleteMany({ where: { songId, event: { date: { gte: new Date() } } } }),
     db.song.delete({ where: { id: songId } }),
   ]);
-  touch(ctx.team.id);
+  touch();
   return { ok: true };
 }
 

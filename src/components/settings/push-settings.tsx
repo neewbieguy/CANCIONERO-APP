@@ -121,7 +121,7 @@ export function PushSettings({ publicKey }: { publicKey: string | null }) {
           <span>
             <span className="block text-sm font-medium">Notificaciones en este dispositivo</span>
             <span className="block text-xs text-muted-foreground">
-              Asignaciones, cambios en eventos, recordatorios del día anterior y nuevos miembros.
+              Asignaciones, cambios en eventos y nuevos miembros.
             </span>
           </span>
         </span>

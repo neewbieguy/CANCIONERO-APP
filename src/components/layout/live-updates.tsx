@@ -3,53 +3,43 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export const REALTIME_EVENT = "cancionero:realtime";
+const INTERVAL_MS = 30_000;
 
 /**
- * Mantiene una conexión SSE por pestaña. Reenvía cada evento como CustomEvent
- * en window y refresca los datos del servidor cuando hace falta.
+ * Mantiene los datos al día sin conexión permanente (funciona en Vercel):
+ * refresca cada 30 segundos mientras la pestaña está visible, y al volver a ella.
  */
-export function LiveUpdates({ teamId }: { teamId: string }) {
+export function LiveUpdates() {
   const router = useRouter();
 
   useEffect(() => {
-    let es: EventSource | null = null;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    let closed = false;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let last = Date.now();
 
-    const refreshSoon = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => router.refresh(), 300);
+    const refresh = () => {
+      last = Date.now();
+      router.refresh();
+    };
+    const start = () => {
+      clearInterval(timer);
+      timer = setInterval(() => document.visibilityState === "visible" && refresh(), INTERVAL_MS);
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      // Al volver a la app, si pasó un rato, traemos lo nuevo enseguida
+      if (Date.now() - last > 10_000) refresh();
+      start();
     };
 
-    const connect = () => {
-      es = new EventSource(`/api/stream?teamId=${encodeURIComponent(teamId)}`);
-      es.onmessage = (e) => {
-        let data: { type: string };
-        try {
-          data = JSON.parse(e.data);
-        } catch {
-          return;
-        }
-        if (data.type === "ping") return;
-        window.dispatchEvent(new CustomEvent(REALTIME_EVENT, { detail: data }));
-        refreshSoon();
-      };
-      es.onerror = () => {
-        es?.close();
-        if (!closed) retry = setTimeout(connect, 5000);
-      };
-    };
-
-    connect();
+    start();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
     return () => {
-      closed = true;
-      clearTimeout(timer);
-      clearTimeout(retry);
-      es?.close();
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
     };
-  }, [teamId, router]);
+  }, [router]);
 
   return null;
 }

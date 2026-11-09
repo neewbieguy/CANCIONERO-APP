@@ -1,5 +1,5 @@
 // Cancionero — esquema de datos
-// Los "enums" se modelan como String (SQLite no los soporta bien en Prisma);
+// Base de datos: Postgres (Neon). Los "enums" se modelan como String;
 // los valores válidos viven en src/lib/constants.ts.
 
 generator client {
@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // conexión con pooling (la usa la app)
+  directUrl = env("DATABASE_URL_UNPOOLED") // conexión directa (la usan las migraciones)
 }
 
 // ---------- Auth (NextAuth) ----------
@@ -130,7 +131,6 @@ model Event {
   template       String    @default("custom") // sunday_service | rehearsal | concert | custom
   location       String?
   notes          String?
-  reminderSentAt DateTime? // cuándo se mandó el recordatorio "mañana tenés…"
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -211,7 +211,7 @@ model SongFavorite {
 model Notification {
   id        String    @id @default(cuid())
   userId    String
-  type      String // event_invite | event_updated | member_joined | event_reminder
+  type      String // event_invite | event_updated | member_joined
   title     String
   body      String?
   link      String?

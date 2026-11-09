@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { formatShortDate } from "@/lib/dates";
 import { notifyUsers } from "@/lib/notify";
 import { can } from "@/lib/permissions";
-import { publish, topics } from "@/lib/realtime";
 import { isSameSet, moveId, templateMoments } from "@/lib/setlist";
 import { requireTeamContext, type TeamContext } from "@/lib/session";
 import { EVENT_TEMPLATES, getTemplate } from "@/lib/templates";
@@ -21,10 +20,9 @@ async function requireEventManager(): Promise<{ ok: true; ctx: TeamContext } | {
   return { ok: true, ctx };
 }
 
-function touch(teamId: string, eventId?: string) {
+function touch(eventId?: string) {
   revalidatePath("/", "layout");
   if (eventId) revalidatePath(`/eventos/${eventId}`);
-  publish(topics.team(teamId), { type: "refresh", scope: eventId ? `event:${eventId}` : "events" });
 }
 
 async function findEvent(eventId: string, teamId: string) {
@@ -75,7 +73,7 @@ export async function createEvent(input: EventInput): Promise<{ ok: true; id: st
       setlist: { create: moments.map((m, order) => ({ ...m, order })) },
     },
   });
-  touch(ctx.team.id);
+  touch();
   return { ok: true, id: event.id };
 }
 
@@ -98,8 +96,6 @@ export async function updateEvent(eventId: string, input: EventInput): Promise<R
       template: data.template,
       location: data.location,
       notes: data.notes,
-      // Si cambió la fecha, el recordatorio se vuelve a mandar
-      ...(event.date.getTime() !== data.date.getTime() ? { reminderSentAt: null } : {}),
     },
   });
 
@@ -120,7 +116,7 @@ export async function updateEvent(eventId: string, input: EventInput): Promise<R
       },
     );
   }
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }
 
@@ -136,7 +132,7 @@ export async function updateEventNotes(eventId: string, notes: string): Promise<
     data: { notes: parsed.data.trim() || null },
   });
   if (updated.count === 0) return { ok: false, error: "Evento no encontrado" };
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }
 
@@ -157,7 +153,7 @@ export async function deleteEvent(eventId: string): Promise<Result> {
       { type: "event_updated", title: `Se canceló ${event.title}`, body: formatShortDate(event.date), link: "/eventos" },
     );
   }
-  touch(ctx.team.id);
+  touch();
   return { ok: true };
 }
 
@@ -211,7 +207,7 @@ export async function duplicateEvent(eventId: string, date: string): Promise<{ o
     src.participants.map((p) => p.userId).filter((id) => id !== ctx.user.id),
     { type: "event_invite", title: `Te asignaron a ${copy.title}`, body: formatShortDate(copy.date), link: `/eventos/${copy.id}` },
   );
-  touch(ctx.team.id);
+  touch();
   return { ok: true, id: copy.id };
 }
 
@@ -261,7 +257,7 @@ export async function addSongToSetlist(input: z.input<typeof addSongSchema>): Pr
   await db.setlistItem.create({
     data: { eventId, type: "song", songId, key: key ?? song.key, notes, order: await nextOrder(eventId) },
   });
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }
 
@@ -284,7 +280,7 @@ export async function addMomentToSetlist(input: z.input<typeof addMomentSchema>)
   await db.setlistItem.create({
     data: { eventId, type: "moment", title, durationMin, notes, order: await nextOrder(eventId) },
   });
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }
 
@@ -314,7 +310,7 @@ export async function updateSetlistItem(input: z.input<typeof updateItemSchema>)
         ? { key, durationMin, notes }
         : { title: title ?? item.title, durationMin, notes },
   });
-  touch(ctx.team.id, item.eventId);
+  touch(item.eventId);
   return { ok: true };
 }
 
@@ -325,7 +321,7 @@ export async function removeSetlistItem(itemId: string): Promise<Result> {
   const item = await db.setlistItem.findFirst({ where: { id: itemId, event: { teamId: ctx.team.id } } });
   if (!item) return { ok: false, error: "Elemento no encontrado" };
   await db.setlistItem.delete({ where: { id: itemId } });
-  touch(ctx.team.id, item.eventId);
+  touch(item.eventId);
   return { ok: true };
 }
 
@@ -344,7 +340,7 @@ export async function moveSetlistItem(itemId: string, direction: -1 | 1): Promis
 
   const items = await db.setlistItem.findMany({ where: { eventId: item.eventId }, orderBy: { order: "asc" }, select: { id: true } });
   await saveOrder(item.eventId, moveId(items.map((i) => i.id), itemId, direction));
-  touch(ctx.team.id, item.eventId);
+  touch(item.eventId);
   return { ok: true };
 }
 
@@ -357,6 +353,6 @@ export async function reorderSetlist(eventId: string, ids: string[]): Promise<Re
   const items = await db.setlistItem.findMany({ where: { eventId }, select: { id: true } });
   if (!isSameSet(items.map((i) => i.id), ids)) return { ok: false, error: "El setlist cambió, recargá la página" };
   await saveOrder(eventId, ids);
-  touch(ctx.team.id, eventId);
+  touch(eventId);
   return { ok: true };
 }

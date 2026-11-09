@@ -43,7 +43,7 @@ export async function sendTestPush(): Promise<Result> {
   if (count === 0) return { ok: false, error: "No hay dispositivos con notificaciones activadas" };
   await sendPushToUsers([user.id], {
     title: "¡Las notificaciones funcionan! 🎶",
-    body: "Así te vamos a avisar de eventos, cambios y recordatorios.",
+    body: "Así te vamos a avisar de asignaciones y cambios en los eventos.",
     link: "/ajustes",
   });
   return { ok: true };

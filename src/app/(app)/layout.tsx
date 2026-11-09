@@ -37,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-dvh">
       <ThemeSync theme={user.theme} />
-      <LiveUpdates teamId={team.id} />
+      <LiveUpdates />
       <Sidebar user={avatarUser} teams={teams} currentTeamId={team.id} />
 
       <div className="md:pl-[72px]">

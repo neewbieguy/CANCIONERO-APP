@@ -12,7 +12,7 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Para src/instrumentation.ts (recordatorios automáticos)
+  // Para src/instrumentation.ts (zona horaria del servidor)
   experimental: { instrumentationHook: true },
   images: {
     remotePatterns: [
