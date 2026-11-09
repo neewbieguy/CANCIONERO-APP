@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, MapPin, Mic2, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin, Mic2, MonitorPlay, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AvatarStack } from "@/components/common/user-avatar";
 import { KeyBadge, StatusBadge } from "@/components/events/status-badge";
@@ -38,21 +38,25 @@ function EmptyIllustration() {
   );
 }
 
-export function EmptyEventCard() {
+export function EmptyEventCard({ canCreate }: { canCreate: boolean }) {
   return (
     <section className="flex flex-col items-center gap-4 rounded-2xl border bg-card px-6 py-10 text-center">
       <EmptyIllustration />
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold">Planifica tu primer evento</h2>
+        <h2 className="text-xl font-semibold">{canCreate ? "Planifica tu primer evento" : "No hay eventos próximos"}</h2>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">
-          Elegí una plantilla (servicio dominical, ensayo o concierto), armá el setlist y asigná roles a tu equipo.
+          {canCreate
+            ? "Elegí una plantilla (servicio dominical, ensayo o concierto), armá el setlist y asigná roles a tu equipo."
+            : "Cuando un admin cree un evento y te asigne, lo vas a ver acá."}
         </p>
       </div>
-      <Button asChild size="lg">
-        <Link href="/eventos/nuevo">
-          <Plus /> Nuevo evento
-        </Link>
-      </Button>
+      {canCreate && (
+        <Button asChild size="lg">
+          <Link href="/eventos/nuevo">
+            <Plus /> Nuevo evento
+          </Link>
+        </Button>
+      )}
     </section>
   );
 }
@@ -87,11 +91,20 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
             )}
           </div>
         </div>
-        <Button asChild variant="secondary" className="shrink-0">
-          <Link href={`/eventos/${event.id}`}>
-            Ver evento <ArrowRight />
-          </Link>
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          {songs > 0 && (
+            <Button asChild variant="outline">
+              <Link href={`/eventos/${event.id}/atril`}>
+                <MonitorPlay /> Atril
+              </Link>
+            </Button>
+          )}
+          <Button asChild variant="secondary">
+            <Link href={`/eventos/${event.id}`}>
+              Ver evento <ArrowRight />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-0 md:grid-cols-[1fr_280px]">
@@ -114,7 +127,16 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
                   {item.type === "song" ? (
                     <>
                       <span className="min-w-0 flex-1 truncate text-sm">
-                        <span className="font-medium">{item.song?.title ?? "Canción eliminada"}</span>
+                        {item.song ? (
+                          <Link
+                            href={`/canciones/${item.song.id}${item.key ? `?tono=${encodeURIComponent(item.key)}` : ""}`}
+                            className="font-medium hover:text-primary hover:underline"
+                          >
+                            {item.song.title}
+                          </Link>
+                        ) : (
+                          <span className="font-medium">Canción eliminada</span>
+                        )}
                         {item.song?.artist && <span className="text-muted-foreground"> · {item.song.artist}</span>}
                       </span>
                       <KeyBadge musicalKey={item.key ?? item.song?.key} />

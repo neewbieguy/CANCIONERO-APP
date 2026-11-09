@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { accessOf } from "@/lib/permissions";
 
 /** Usuario logueado (o null). Cacheado por request. */
 export const getCurrentUser = cache(async () => {
@@ -17,13 +18,12 @@ export async function requireUser() {
   return user;
 }
 
-/** Crea un equipo nuevo con el usuario como admin y su canal general. */
+/** Crea un equipo nuevo con el usuario como admin. */
 export async function createTeamFor(userId: string, name: string) {
   const team = await db.team.create({
     data: {
       name,
       memberships: { create: { userId, role: "admin" } },
-      channels: { create: { type: "team" } },
     },
   });
   await db.user.update({ where: { id: userId }, data: { currentTeamId: team.id } });
@@ -65,7 +65,8 @@ export const requireTeamContext = cache(async () => {
   }
 
   const { team, ...m } = membership;
-  return { user, team, membership: m, isAdmin: m.role === "admin" };
+  const access = accessOf(m);
+  return { user, team, membership: m, isAdmin: access.isAdmin, access };
 });
 
 export type TeamContext = Awaited<ReturnType<typeof requireTeamContext>>;

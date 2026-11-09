@@ -254,9 +254,6 @@ async function main() {
   await db.$transaction([
     db.notification.deleteMany(),
     db.pushSubscription.deleteMany(),
-    db.channelReadState.deleteMany(),
-    db.message.deleteMany(),
-    db.channel.deleteMany(),
     db.eventParticipant.deleteMany(),
     db.setlistItem.deleteMany(),
     db.event.deleteMany(),
@@ -293,6 +290,9 @@ async function main() {
       role: PEOPLE[i].role,
       instrument: PEOPLE[i].instrument,
       joinedAt: subDays(new Date(), 120 - i * 10),
+      // Ejemplos de permisos dados por el admin: Martín gestiona canciones, Sofía puede invitar
+      canManageSongs: PEOPLE[i].email === "martin@cancionero.app",
+      canInvite: PEOPLE[i].email === "sofia@cancionero.app",
     })),
   });
   await db.user.updateMany({ data: { currentTeamId: team.id } });
@@ -306,7 +306,6 @@ async function main() {
       { userId: users[2].id, teamId: team2.id, role: "admin", instrument: "Voz principal" },
     ],
   });
-  await db.channel.create({ data: { teamId: team2.id, type: "team" } });
 
   console.log("🎵 Canciones…");
   const songs: Song[] = [];
@@ -325,7 +324,6 @@ async function main() {
   });
 
   console.log("📅 Eventos…");
-  const teamChannel = await db.channel.create({ data: { teamId: team.id, type: "team" } });
   const at = (d: Date, h: number, m = 0) => setMinutes(setHours(startOfDay(d), h), m);
 
   // Domingos pasados (8), ensayos de jueves pasados (6), y futuros
@@ -413,51 +411,7 @@ async function main() {
         };
       }),
     });
-
-    // Canal del evento (solo para los próximos y los 2 últimos)
-    if (!past || spec.date > subDays(now, 10)) {
-      const ch = await db.channel.create({ data: { teamId: team.id, type: "event", eventId: event.id } });
-      const lines = [
-        [users[1], "¿Hacemos la segunda canción un tono más abajo?"],
-        [users[3], "Dale, yo lo paso en el teclado 👍"],
-        [users[4], "Llego 15 min antes para armar la batería"],
-        [users[7], "Prueba de sonido a las 9:00, no se olviden los in-ears"],
-      ] as const;
-      await db.message.createMany({
-        data: lines.slice(0, past ? 2 : 4).map(([u, body], i) => ({
-          channelId: ch.id,
-          userId: u.id,
-          body,
-          createdAt: subMinutes(past ? spec.date : now, (lines.length - i) * 37),
-        })),
-      });
-      if (past) await db.channelReadState.create({ data: { userId: demo.id, channelId: ch.id, lastReadAt: now } });
-    }
   }
-
-  console.log("💬 Chat del equipo…");
-  const teamMessages: [number, string][] = [
-    [1, "¡Hola equipo! Bienvenidos al chat general 🙌"],
-    [2, "¿Alguien tiene la hoja de acordes de Corona de luz en Bb?"],
-    [0, "Ya está cargada en Canciones, con transposición incluida"],
-    [5, "Genial, gracias!"],
-    [6, "Este domingo no llego al ensayo previo, aviso"],
-    [3, "Subí las notas del puente a la canción Hogar"],
-    [1, "Recuerden confirmar asistencia en los eventos de este mes"],
-    [4, "Confirmado el jueves 🥁"],
-  ];
-  await db.message.createMany({
-    data: teamMessages.map(([u, body], i) => ({
-      channelId: teamChannel.id,
-      userId: users[u].id,
-      body,
-      createdAt: subMinutes(now, (teamMessages.length - i) * 95),
-    })),
-  });
-  // El demo leyó hasta el 5to mensaje: quedan 3 sin leer
-  await db.channelReadState.create({
-    data: { userId: demo.id, channelId: teamChannel.id, lastReadAt: subMinutes(now, 3 * 95 + 10) },
-  });
 
   console.log("🔔 Notificaciones…");
   await db.notification.createMany({
@@ -465,12 +419,11 @@ async function main() {
       { userId: demo.id, type: "event_invite", title: "Te asignaron a Servicio dominical", body: "Líder de alabanza", link: "/eventos", createdAt: subMinutes(now, 30) },
       { userId: demo.id, type: "event_updated", title: "Lucía Fernández actualizó el setlist", body: "Noche de adoración", link: "/eventos", createdAt: subMinutes(now, 180) },
       { userId: demo.id, type: "member_joined", title: "Camila Ortiz se unió al equipo", link: "/equipo", createdAt: subDays(now, 2), readAt: subDays(now, 1) },
-      { userId: demo.id, type: "message", title: "Nuevo mensaje en #General", body: "Recuerden confirmar asistencia…", link: "/chats", createdAt: subDays(now, 3), readAt: subDays(now, 3) },
     ],
   });
 
-  const counts = await Promise.all([db.user.count(), db.song.count(), db.event.count(), db.message.count()]);
-  console.log(`✅ Listo: ${counts[0]} usuarios, ${counts[1]} canciones, ${counts[2]} eventos, ${counts[3]} mensajes.`);
+  const counts = await Promise.all([db.user.count(), db.song.count(), db.event.count()]);
+  console.log(`✅ Listo: ${counts[0]} usuarios, ${counts[1]} canciones, ${counts[2]} eventos.`);
   console.log("   Entrá con el botón «Entrar como demo» (demo@cancionero.app).");
 }
 

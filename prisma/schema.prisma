@@ -28,8 +28,6 @@ model User {
   memberships       Membership[]
   participations    EventParticipant[]
   favorites         SongFavorite[]
-  messages          Message[]
-  readStates        ChannelReadState[]
   notifications     Notification[]
   invitesCreated    Invite[]
   pushSubscriptions PushSubscription[]
@@ -82,7 +80,6 @@ model Team {
   events      Event[]
   songs       Song[]
   invites     Invite[]
-  channels    Channel[]
 }
 
 model Membership {
@@ -92,6 +89,11 @@ model Membership {
   role       String   @default("member") // admin | member
   instrument String? // rol habitual: "Voz", "Bajo", "Sonido"...
   joinedAt   DateTime @default(now())
+
+  // Permisos que el admin le da a un miembro (los admins los tienen todos)
+  canManageEvents Boolean @default(false) // crear, editar y borrar eventos y setlists
+  canManageSongs  Boolean @default(false) // añadir, editar y borrar canciones
+  canInvite       Boolean @default(false) // ver y compartir el link de invitación
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
@@ -120,21 +122,21 @@ model Invite {
 // ---------- Eventos y setlists ----------
 
 model Event {
-  id        String    @id @default(cuid())
-  teamId    String
-  title     String
-  date      DateTime
-  endDate   DateTime?
-  template  String    @default("custom") // sunday_service | rehearsal | concert | custom
-  location  String?
-  notes     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  teamId         String
+  title          String
+  date           DateTime
+  endDate        DateTime?
+  template       String    @default("custom") // sunday_service | rehearsal | concert | custom
+  location       String?
+  notes          String?
+  reminderSentAt DateTime? // cuándo se mandó el recordatorio "mañana tenés…"
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   team         Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
   setlist      SetlistItem[]
   participants EventParticipant[]
-  channel      Channel?
 
   @@index([teamId, date])
 }
@@ -204,52 +206,12 @@ model SongFavorite {
   @@id([userId, songId])
 }
 
-// ---------- Chats ----------
-
-model Channel {
-  id      String  @id @default(cuid())
-  teamId  String
-  type    String // team | event
-  eventId String? @unique
-
-  team       Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  event      Event?             @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  messages   Message[]
-  readStates ChannelReadState[]
-
-  @@index([teamId])
-}
-
-model Message {
-  id        String   @id @default(cuid())
-  channelId String
-  userId    String
-  body      String
-  createdAt DateTime @default(now())
-
-  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([channelId, createdAt])
-}
-
-model ChannelReadState {
-  userId     String
-  channelId  String
-  lastReadAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-
-  @@id([userId, channelId])
-}
-
 // ---------- Notificaciones ----------
 
 model Notification {
   id        String    @id @default(cuid())
   userId    String
-  type      String // event_invite | event_updated | member_joined | message
+  type      String // event_invite | event_updated | member_joined | event_reminder
   title     String
   body      String?
   link      String?

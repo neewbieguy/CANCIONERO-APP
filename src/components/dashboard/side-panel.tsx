@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { isSameDay } from "date-fns";
-import { ArrowRight, Heart, MessageCircle, Music2, Users } from "lucide-react";
+import { ArrowRight, Heart, Music2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AvatarStack, type AvatarUser } from "@/components/common/user-avatar";
 import { KeyBadge } from "@/components/events/status-badge";
@@ -123,39 +123,6 @@ export function FavoritesCard({ songs }: { songs: DashboardData["favorites"] }) 
           ))}
         </ul>
       )}
-    </section>
-  );
-}
-
-export function UnreadCard({ unread }: { unread: DashboardData["unread"] }) {
-  return (
-    <section className={card}>
-      <div className="mb-3 flex items-center justify-between">
-        <p className={title}>Mensajes sin leer</p>
-        {unread.total > 0 && (
-          <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
-            {unread.total}
-          </span>
-        )}
-      </div>
-      {unread.channels.length === 0 ? (
-        <p className="py-2 text-xs text-muted-foreground">Estás al día. No hay mensajes nuevos.</p>
-      ) : (
-        <ul className="mb-3 space-y-1">
-          {unread.channels.slice(0, 4).map((c) => (
-            <li key={c.id}>
-              <Link href={`/chats/${c.id}`} className="flex items-center gap-3 rounded-xl p-2 text-sm hover:bg-accent">
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate"># {c.name}</span>
-                <span className="text-xs font-semibold text-primary">{c.count}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-      <Button asChild variant="secondary" size="sm" className="w-full">
-        <Link href="/chats">Abrir Chats</Link>
-      </Button>
     </section>
   );
 }

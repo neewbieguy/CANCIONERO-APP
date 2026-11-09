@@ -1,17 +1,39 @@
 import { describe, expect, it } from "vitest";
 import { addDays, isSameDay, startOfDay } from "date-fns";
-import { can, canChangeRole, canRemoveMember } from "@/lib/permissions";
+import { can, canChangeRole, canEditInstrument, canGrantPermission, canRemoveMember } from "@/lib/permissions";
 import { isInviteUsable } from "@/lib/invites";
 import { nextSevenDays } from "@/lib/dates";
 import { initials, plural } from "@/lib/utils";
 import { EVENT_TEMPLATES, getTemplate } from "@/lib/templates";
 
 describe("permisos", () => {
-  it("solo admins gestionan eventos y miembros", () => {
-    expect(can.manageEvents("admin")).toBe(true);
-    expect(can.manageEvents("member")).toBe(false);
-    expect(can.manageMembers("member")).toBe(false);
-    expect(can.editSongs("member")).toBe(true);
+  const member = { role: "member", canManageEvents: false, canManageSongs: false, canInvite: false };
+  const admin = { ...member, role: "admin" };
+
+  it("admin puede todo; miembro sin permisos no puede crear ni invitar", () => {
+    expect(can.manageEvents(admin)).toBe(true);
+    expect(can.manageSongs(admin)).toBe(true);
+    expect(can.invite(admin)).toBe(true);
+    expect(can.manageEvents(member)).toBe(false);
+    expect(can.manageSongs(member)).toBe(false);
+    expect(can.invite(member)).toBe(false);
+    expect(can.manageMembers(member)).toBe(false);
+  });
+
+  it("cada permiso dado por el admin habilita solo lo suyo", () => {
+    const songs = { ...member, canManageSongs: true };
+    expect(can.manageSongs(songs)).toBe(true);
+    expect(can.manageEvents(songs)).toBe(false);
+    expect(can.invite(songs)).toBe(false);
+    expect(can.manageEvents({ ...member, canManageEvents: true })).toBe(true);
+    expect(can.invite({ ...member, canInvite: true })).toBe(true);
+    expect(can.manageMembers({ ...member, canManageEvents: true, canManageSongs: true, canInvite: true })).toBe(false);
+  });
+
+  it("solo un admin da permisos, y solo a miembros", () => {
+    expect(canGrantPermission({ actorRole: "admin", targetRole: "member" }).ok).toBe(true);
+    expect(canGrantPermission({ actorRole: "member", targetRole: "member" }).ok).toBe(false);
+    expect(canGrantPermission({ actorRole: "admin", targetRole: "admin" }).ok).toBe(false);
   });
 
   it("no se puede degradar al único admin", () => {
@@ -24,6 +46,14 @@ describe("permisos", () => {
     expect(canRemoveMember({ actorRole: "member", isSelf: true, targetRole: "member", adminCount: 1 }).ok).toBe(true);
     expect(canRemoveMember({ actorRole: "member", isSelf: false, targetRole: "member", adminCount: 1 }).ok).toBe(false);
     expect(canRemoveMember({ actorRole: "admin", isSelf: true, targetRole: "admin", adminCount: 1 }).ok).toBe(false);
+    expect(canRemoveMember({ actorRole: "admin", isSelf: false, targetRole: "admin", adminCount: 2 }).ok).toBe(true);
+    expect(canRemoveMember({ actorRole: "admin", isSelf: false, targetRole: "member", adminCount: 1 }).ok).toBe(true);
+  });
+
+  it("instrumento: cada uno el suyo, el admin el de todos", () => {
+    expect(canEditInstrument({ actorRole: "member", isSelf: true })).toBe(true);
+    expect(canEditInstrument({ actorRole: "member", isSelf: false })).toBe(false);
+    expect(canEditInstrument({ actorRole: "admin", isSelf: false })).toBe(true);
   });
 });
 

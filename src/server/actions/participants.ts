@@ -59,7 +59,7 @@ const addSchema = z.object({
 
 export async function addParticipant(input: z.infer<typeof addSchema>): Promise<Result> {
   const ctx = await requireTeamContext();
-  if (!can.manageEvents(ctx.membership.role)) return { ok: false, error: "Solo un admin puede asignar participantes" };
+  if (!can.manageEvents(ctx.membership)) return { ok: false, error: "No tenés permiso para gestionar eventos" };
   const parsed = addSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   const { eventId, userId, role } = parsed.data;
@@ -92,7 +92,7 @@ export async function addParticipant(input: z.infer<typeof addSchema>): Promise<
 
 export async function removeParticipant(eventId: string, userId: string): Promise<Result> {
   const ctx = await requireTeamContext();
-  if (!can.manageEvents(ctx.membership.role)) return { ok: false, error: "Solo un admin puede quitar participantes" };
+  if (!can.manageEvents(ctx.membership)) return { ok: false, error: "No tenés permiso para gestionar eventos" };
   const event = await loadEvent(eventId, ctx.team.id);
   if (!event) return { ok: false, error: "Evento no encontrado" };
   await db.eventParticipant.deleteMany({ where: { eventId, userId } });
@@ -106,7 +106,7 @@ export async function setParticipantStatus(
   status: "pending" | "confirmed" | "declined",
 ): Promise<Result> {
   const ctx = await requireTeamContext();
-  if (!can.manageEvents(ctx.membership.role) && userId !== ctx.user.id)
+  if (!can.manageEvents(ctx.membership) && userId !== ctx.user.id)
     return { ok: false, error: "No tenés permiso" };
   const parsed = z.enum(["pending", "confirmed", "declined"]).safeParse(status);
   if (!parsed.success) return { ok: false, error: "Estado inválido" };

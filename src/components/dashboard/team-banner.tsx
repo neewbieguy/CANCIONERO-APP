@@ -11,7 +11,7 @@ export function TeamBanner({
   userName,
 }: {
   members: AvatarUser[];
-  inviteLink: string;
+  inviteLink: string | null;
   teamName: string;
   userName: string;
 }) {
@@ -46,7 +46,7 @@ export function TeamBanner({
             ) : (
               <AvatarStack users={members} max={5} size="h-10 w-10" />
             )}
-            {Array.from({ length: alone ? 3 : 1 }).map((_, i) => (
+            {inviteLink && Array.from({ length: alone ? 3 : 1 }).map((_, i) => (
               <InviteDialog key={i} link={inviteLink} teamName={teamName}>
                 <button
                   className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 bg-card text-muted-foreground ring-2 ring-card transition-colors hover:border-primary hover:text-primary"
@@ -57,13 +57,14 @@ export function TeamBanner({
               </InviteDialog>
             ))}
           </div>
-          {alone ? (
-            <CopyInviteButton link={inviteLink} />
-          ) : (
-            <InviteDialog link={inviteLink} teamName={teamName}>
-              <Button variant="secondary">Invitar</Button>
-            </InviteDialog>
-          )}
+          {inviteLink &&
+            (alone ? (
+              <CopyInviteButton link={inviteLink} />
+            ) : (
+              <InviteDialog link={inviteLink} teamName={teamName}>
+                <Button variant="secondary">Invitar</Button>
+              </InviteDialog>
+            ))}
         </div>
       </div>
     </section>

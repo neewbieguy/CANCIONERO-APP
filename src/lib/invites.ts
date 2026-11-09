@@ -29,3 +29,11 @@ export async function getOrCreateActiveInvite(teamId: string, createdById: strin
   if (usable) return usable;
   return db.invite.create({ data: { teamId, createdById, token: newInviteToken() } });
 }
+
+/** Revoca los links activos del equipo y crea uno nuevo (el link viejo deja de funcionar). */
+export async function regenerateInvite(teamId: string, createdById: string) {
+  return db.$transaction(async (tx) => {
+    await tx.invite.updateMany({ where: { teamId, revoked: false }, data: { revoked: true } });
+    return tx.invite.create({ data: { teamId, createdById, token: newInviteToken() } });
+  });
+}

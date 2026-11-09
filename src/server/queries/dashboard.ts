@@ -3,14 +3,13 @@ import { addDays, startOfDay } from "date-fns";
 import { db } from "@/lib/db";
 import { getOrCreateActiveInvite, inviteUrl } from "@/lib/invites";
 import type { TeamContext } from "@/lib/session";
-import { getUnreadByChannel } from "./chats";
 
 export async function getDashboardData(ctx: TeamContext) {
   const { user, team } = ctx;
   const today = startOfDay(new Date());
   const weekEnd = addDays(today, 7);
 
-  const [members, nextEvent, weekEvents, eventCount, songCount, favorites, unreadMap, invite] = await Promise.all([
+  const [members, nextEvent, weekEvents, eventCount, songCount, favorites, invite] = await Promise.all([
     db.membership.findMany({
       where: { teamId: team.id },
       include: { user: { select: { id: true, name: true, email: true, image: true } } },
@@ -43,18 +42,9 @@ export async function getDashboardData(ctx: TeamContext) {
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
-    getUnreadByChannel(user.id, team.id),
-    getOrCreateActiveInvite(team.id, user.id),
+    // Solo quien puede invitar recibe (o genera) el link
+    ctx.access.invite ? getOrCreateActiveInvite(team.id, user.id) : null,
   ]);
-
-  // Canales con mensajes sin leer (para la tarjeta de chats)
-  const unreadChannelIds = Array.from(unreadMap.entries()).filter(([, n]) => n > 0);
-  const unreadChannels = unreadChannelIds.length
-    ? await db.channel.findMany({
-        where: { id: { in: unreadChannelIds.map(([id]) => id) } },
-        select: { id: true, type: true, event: { select: { title: true } } },
-      })
-    : [];
 
   return {
     members: members.map((m) => ({ ...m.user, role: m.role, instrument: m.instrument })),
@@ -63,17 +53,7 @@ export async function getDashboardData(ctx: TeamContext) {
     eventCount,
     songCount,
     favorites: favorites.map((f) => f.song),
-    unread: {
-      total: unreadChannelIds.reduce((acc, [, n]) => acc + n, 0),
-      channels: unreadChannels
-        .map((c) => ({
-          id: c.id,
-          name: c.type === "team" ? "General" : (c.event?.title ?? "Evento"),
-          count: unreadMap.get(c.id) ?? 0,
-        }))
-        .sort((a, b) => b.count - a.count),
-    },
-    inviteLink: inviteUrl(invite.token),
+    inviteLink: invite ? inviteUrl(invite.token) : null,
   };
 }
 

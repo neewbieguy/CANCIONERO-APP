@@ -8,9 +8,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { cn } from "@/lib/utils";
 import { MORE_ITEMS, NAV_ITEMS, isActive } from "./nav-items";
 import { ThemeToggle } from "./theme-toggle";
-import { HelpDialog, PremiumDialog } from "./extras";
+import { HelpDialog } from "./extras";
 
-export function MobileNav({ unreadChats }: { unreadChats: number }) {
+export function MobileNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const items = NAV_ITEMS.filter((i) => i.mobile);
@@ -23,17 +23,9 @@ export function MobileNav({ unreadChats }: { unreadChats: number }) {
       <div className="flex">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
-          const badge = item.href === "/chats" ? unreadChats : 0;
           return (
             <Link key={item.href} href={item.href} className={cn(tab, active && "text-primary")}>
-              <span className="relative">
-                <item.icon className="h-5 w-5" />
-                {badge > 0 && (
-                  <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                    {badge > 99 ? "99+" : badge}
-                  </span>
-                )}
-              </span>
+              <item.icon className="h-5 w-5" />
               {item.label}
             </Link>
           );
@@ -68,7 +60,6 @@ export function MobileNav({ unreadChats }: { unreadChats: number }) {
           <div className="mt-4 flex justify-center gap-2">
             <ThemeToggle side="top" />
             <HelpDialog side="top" />
-            <PremiumDialog side="top" />
           </div>
         </SheetContent>
       </Sheet>

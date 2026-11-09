@@ -7,17 +7,8 @@ import { EventEmitter } from "node:events";
  * reemplazar publish/subscribe por Pusher, Supabase Realtime o Redis pub/sub.
  */
 export type RealtimeEvent =
-  | { type: "message"; channelId: string; message: ChatMessageDTO }
   | { type: "notification" }
   | { type: "refresh"; scope: string };
-
-export type ChatMessageDTO = {
-  id: string;
-  channelId: string;
-  body: string;
-  createdAt: string;
-  user: { id: string; name: string | null; email: string; image: string | null };
-};
 
 const g = globalThis as unknown as { __cancioneroBus?: EventEmitter };
 const bus = g.__cancioneroBus ?? new EventEmitter();

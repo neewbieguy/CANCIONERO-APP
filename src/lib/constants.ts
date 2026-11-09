@@ -15,10 +15,7 @@ export const PARTICIPANT_STATUS_LABELS: Record<ParticipantStatus, string> = {
 export const SETLIST_ITEM_TYPES = ["song", "moment"] as const;
 export type SetlistItemType = (typeof SETLIST_ITEM_TYPES)[number];
 
-export const CHANNEL_TYPES = ["team", "event"] as const;
-export type ChannelType = (typeof CHANNEL_TYPES)[number];
-
-export const NOTIFICATION_TYPES = ["event_invite", "event_updated", "member_joined", "message"] as const;
+export const NOTIFICATION_TYPES = ["event_invite", "event_updated", "member_joined", "event_reminder"] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 /** Roles sugeridos al asignar participantes a un evento. */

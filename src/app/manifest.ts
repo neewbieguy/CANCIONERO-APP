@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "Cancionero",
     short_name: "Cancionero",
-    description: "Eventos, setlists, acordes y chat para equipos de alabanza y bandas.",
+    description: "Eventos, setlists, acordes y coordinación para equipos de alabanza y bandas.",
     lang: "es",
     start_url: "/",
     scope: "/",
@@ -22,7 +22,6 @@ export default function manifest(): MetadataRoute.Manifest {
     shortcuts: [
       { name: "Nuevo evento", url: "/eventos/nuevo", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Canciones", url: "/canciones", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
-      { name: "Chats", url: "/chats", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],
   };
 }

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Crown, HelpCircle, Check } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,8 +30,10 @@ function IconTrigger({ label, children, side }: { label: string; children: React
 
 const HELP = [
   ["¿Cómo invito a mi equipo?", "Desde Inicio o Equipo, copiá el link de invitación y compartilo por WhatsApp o email."],
-  ["¿Cómo armo un setlist?", "Creá un evento desde una plantilla y agregá canciones o momentos. Arrastrá para reordenar."],
+  ["¿Cómo armo un setlist?", "Creá un evento desde una plantilla y agregá canciones o momentos. Reordená arrastrando (en compu) o con las flechas."],
   ["¿Puedo cambiar el tono?", "Sí, cada canción del setlist tiene su propio tono y la hoja de acordes se transpone sola."],
+  ["¿Cómo uso el Modo Atril?", "Abrí un evento y tocá \"Modo Atril\": ves las canciones del setlist en grande, con cambio de tono y desplazamiento automático. Funciona con pedaleras Bluetooth."],
+  ["¿Puedo pegar acordes de internet?", "Sí. Al añadir una canción pegá la letra con los acordes arriba y se convierte sola."],
   ["¿Funciona sin internet?", "Instalá la app. Las canciones y eventos que abriste quedan disponibles sin conexión."],
 ] as const;
 
@@ -55,45 +56,6 @@ export function HelpDialog({ side = "right" }: { side?: "right" | "top" }) {
             </div>
           ))}
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-const PRO = [
-  "Equipos y miembros ilimitados",
-  "Historial completo de estadísticas",
-  "Adjuntar audios y PDFs a las canciones",
-  "Notificaciones push avanzadas",
-];
-
-export function PremiumDialog({ side = "right" }: { side?: "right" | "top" }) {
-  return (
-    <Dialog>
-      <IconTrigger label="Plan Premium" side={side}>
-        <Crown className="text-amber-400" />
-      </IconTrigger>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/15">
-            <Crown className="h-6 w-6 text-amber-400" />
-          </div>
-          <DialogTitle>Cancionero Premium</DialogTitle>
-          <DialogDescription>Más herramientas para equipos que crecen.</DialogDescription>
-        </DialogHeader>
-        <ul className="space-y-2">
-          {PRO.map((f) => (
-            <li key={f} className="flex items-center gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary" /> {f}
-            </li>
-          ))}
-        </ul>
-        <Button disabled className="w-full">
-          Próximamente
-        </Button>
-        <p className="text-center text-xs text-muted-foreground">
-          Mientras tanto, todo es gratis. <Link href="/ajustes" className="underline">Ver ajustes</Link>
-        </p>
       </DialogContent>
     </Dialog>
   );

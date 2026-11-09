@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { Bell, CalendarClock, CheckCheck, MessageCircle, UserPlus } from "lucide-react";
+import { AlarmClock, Bell, CalendarClock, CheckCheck, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -25,7 +25,7 @@ const ICONS: Record<string, typeof Bell> = {
   event_invite: CalendarClock,
   event_updated: CalendarClock,
   member_joined: UserPlus,
-  message: MessageCircle,
+  event_reminder: AlarmClock,
 };
 
 export function NotificationBell({ notifications, unread }: { notifications: NotificationDTO[]; unread: number }) {

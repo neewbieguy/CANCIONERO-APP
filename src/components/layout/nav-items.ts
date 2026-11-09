@@ -1,8 +1,6 @@
 import {
-  BarChart3,
   CalendarDays,
   Home,
-  MessageCircle,
   Music2,
   Settings,
   Ticket,
@@ -17,16 +15,13 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/eventos", label: "Eventos", icon: Ticket, mobile: true },
   { href: "/canciones", label: "Canciones", icon: Music2, mobile: true },
   { href: "/calendario", label: "Calendario", icon: CalendarDays },
-  { href: "/chats", label: "Chats", icon: MessageCircle, mobile: true },
-  { href: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
+  { href: "/equipo", label: "Equipo", icon: Users, mobile: true },
   { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 
 /** Ítems extra que en móvil van dentro de "Más". */
 export const MORE_ITEMS: NavItem[] = [
   { href: "/calendario", label: "Calendario", icon: CalendarDays },
-  { href: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
-  { href: "/equipo", label: "Equipo", icon: Users },
   { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 

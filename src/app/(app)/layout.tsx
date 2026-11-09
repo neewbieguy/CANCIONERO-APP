@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireTeamContext } from "@/lib/session";
-import { getUnreadTotal } from "@/server/queries/chats";
 import { LogoMark } from "@/components/brand/logo";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -13,7 +12,7 @@ import { LiveUpdates } from "@/components/layout/live-updates";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, team } = await requireTeamContext();
 
-  const [memberships, notifications, unreadNotifications, unreadChats] = await Promise.all([
+  const [memberships, notifications, unreadNotifications] = await Promise.all([
     db.membership.findMany({
       where: { userId: user.id },
       include: { team: { select: { id: true, name: true } } },
@@ -21,7 +20,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }),
     db.notification.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 20 }),
     db.notification.count({ where: { userId: user.id, readAt: null } }),
-    getUnreadTotal(user.id, team.id),
   ]);
 
   const teams = memberships.map((m) => m.team);
@@ -40,7 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-dvh">
       <ThemeSync theme={user.theme} />
       <LiveUpdates teamId={team.id} />
-      <Sidebar user={avatarUser} teams={teams} currentTeamId={team.id} unreadChats={unreadChats} />
+      <Sidebar user={avatarUser} teams={teams} currentTeamId={team.id} />
 
       <div className="md:pl-[72px]">
         <header className="pt-safe sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
@@ -61,7 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <main className="mx-auto max-w-[1400px] px-4 pb-28 pt-6 md:px-8 md:pb-12">{children}</main>
       </div>
 
-      <MobileNav unreadChats={unreadChats} />
+      <MobileNav />
     </div>
   );
 }
