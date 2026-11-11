@@ -42,16 +42,8 @@ export type SongListItem = Awaited<ReturnType<typeof listSongs>>[number];
 export async function getSong(ctx: TeamContext, songId: string) {
   const song = await db.song.findFirst({ where: { id: songId, teamId: ctx.team.id } });
   if (!song) return null;
-  const [favorite, events] = await Promise.all([
-    db.songFavorite.findUnique({ where: { userId_songId: { userId: ctx.user.id, songId } } }),
-    db.setlistItem.findMany({
-      where: { songId },
-      orderBy: { event: { date: "desc" } },
-      take: 8,
-      select: { key: true, event: { select: { id: true, title: true, date: true } } },
-    }),
-  ]);
-  return { ...song, favorite: Boolean(favorite), events };
+  const favorite = await db.songFavorite.findUnique({ where: { userId_songId: { userId: ctx.user.id, songId } } });
+  return { ...song, favorite: Boolean(favorite) };
 }
 export type SongDetail = NonNullable<Awaited<ReturnType<typeof getSong>>>;
 

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { semitonesBetween, transposeKey } from "@/lib/music/transpose";
 import { cn } from "@/lib/utils";
+import { basePxPerSec, formatSpeed, useAutoScroll, useScrollSpeed } from "./auto-scroll";
 import { ChordSheet } from "./chord-sheet";
 import { FONT_MAX, FONT_MIN, useSheetPrefs } from "./song-viewer";
 
@@ -32,8 +33,6 @@ export type StageItem = {
   durationMin: number | null;
   song: { id: string; title: string; artist: string | null; key: string | null; bpm: number | null; chordSheet: string | null } | null;
 };
-
-const SPEEDS = [0.25, 0.5, 0.8, 1.2, 1.8]; // píxeles por cuadro
 
 /** Mantiene la pantalla encendida mientras el atril está abierto (si el navegador lo permite). */
 function useWakeLock() {
@@ -86,7 +85,7 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
   );
   const { fontSize, setFontSize, showChords, setShowChords } = useSheetPrefs(24);
   const [scrolling, setScrolling] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const { speed, slower, faster, canSlower, canFaster } = useScrollSpeed();
   const [listOpen, setListOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -114,25 +113,13 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
   const transpose = (n: number) =>
     current && setOffsets((o) => ({ ...o, [current.id]: ((((o[current.id] ?? 0) + n + 6) % 12) + 12) % 12 - 6 || 0 }));
 
-  // Desplazamiento automático
-  useEffect(() => {
-    if (!scrolling) return;
-    let frame = 0;
-    let acc = 0;
-    const step = () => {
-      const el = scrollRef.current;
-      if (!el) return;
-      acc += SPEEDS[speed];
-      if (acc >= 1) {
-        el.scrollTop += Math.floor(acc);
-        acc -= Math.floor(acc);
-      }
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) return setScrolling(false);
-      frame = requestAnimationFrame(step);
-    };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, [scrolling, speed]);
+  // Desplazamiento automático (el mismo que en la pantalla de la canción)
+  useAutoScroll({
+    target: scrollRef,
+    playing: scrolling,
+    pxPerSec: basePxPerSec(song?.bpm) * speed,
+    onStop: () => setScrolling(false),
+  });
 
   // Teclado y pedaleras Bluetooth (suelen mandar flechas o AvPág/RePág)
   useEffect(() => {
@@ -245,16 +232,16 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
             >
               {scrolling ? <Pause /> : <Play />} Auto
             </Button>
-            <Button variant="outline" size="icon-sm" onClick={() => setSpeed((s) => Math.max(0, s - 1))} aria-label="Más lento" disabled={speed === 0}>
+            <Button variant="outline" size="icon-sm" onClick={slower} aria-label="Más lento" disabled={!canSlower}>
               <Minus />
             </Button>
-            <span className="w-4 text-center text-xs tabular-nums text-muted-foreground">{speed + 1}</span>
+            <span className="w-9 text-center text-xs tabular-nums text-muted-foreground">{formatSpeed(speed)}</span>
             <Button
               variant="outline"
               size="icon-sm"
-              onClick={() => setSpeed((s) => Math.min(SPEEDS.length - 1, s + 1))}
+              onClick={faster}
               aria-label="Más rápido"
-              disabled={speed === SPEEDS.length - 1}
+              disabled={!canFaster}
             >
               <Plus />
             </Button>

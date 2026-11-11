@@ -84,6 +84,17 @@ export function semitonesBetween(fromKey: string, toKey: string): number {
   return d;
 }
 
+const LATIN: Record<string, string> = { C: "Do", D: "Re", E: "Mi", F: "Fa", G: "Sol", A: "La", B: "Si" };
+
+/** Escribe un acorde en notación latina: "F#m7/C#" -> "Fa#m7/Do#". Si no es un acorde, lo deja igual. */
+export function toLatinChord(chord: string): string {
+  const m = CHORD_RE.exec(chord.trim());
+  if (!m) return chord;
+  const [, root, quality, bass] = m;
+  const latin = (note: string) => LATIN[note[0]] + note.slice(1);
+  return latin(root) + quality + (bass ? "/" + latin(bass) : "");
+}
+
 /** Acordes diatónicos de una tonalidad (I ii iii IV V vi para mayor; i III iv v VI VII para menor). */
 export function diatonicChords(key: string): string[] {
   const minor = isMinorKey(key);

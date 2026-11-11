@@ -6,6 +6,7 @@ import {
   semitonesBetween,
   transposeChord,
   transposeKey,
+  toLatinChord,
 } from "@/lib/music/transpose";
 
 describe("transposeChord", () => {
@@ -77,5 +78,17 @@ describe("isChord", () => {
   });
   it("rechaza palabras", () => {
     for (const w of ["Hola", "Dios", "Amor", "Cuando", "Bendito"]) expect(isChord(w), w).toBe(false);
+  });
+});
+
+describe("toLatinChord", () => {
+  it("traduce raíz y bajo", () => {
+    expect(toLatinChord("C")).toBe("Do");
+    expect(toLatinChord("F#m7/C#")).toBe("Fa#m7/Do#");
+    expect(toLatinChord("Bbmaj7")).toBe("Sibmaj7");
+    expect(toLatinChord("G/B")).toBe("Sol/Si");
+  });
+  it("deja igual lo que no es acorde", () => {
+    expect(toLatinChord("N.C.")).toBe("N.C.");
   });
 });

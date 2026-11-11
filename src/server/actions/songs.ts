@@ -117,3 +117,18 @@ export async function toggleFavorite(songId: string, favorite: boolean): Promise
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+/** Guarda las notas de la canción (las ve todo el equipo; las edita quien gestiona canciones). */
+export async function updateSongNotes(songId: string, notes: string): Promise<Result> {
+  const auth = await requireSongManager();
+  if (!auth.ok) return auth;
+  const parsed = z.string().max(5000, "Las notas son demasiado largas").safeParse(notes);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Notas inválidas" };
+  const updated = await db.song.updateMany({
+    where: { id: songId, teamId: auth.ctx.team.id },
+    data: { notes: parsed.data.trim() || null },
+  });
+  if (updated.count === 0) return { ok: false, error: "Canción no encontrada" };
+  touch(songId);
+  return { ok: true };
+}

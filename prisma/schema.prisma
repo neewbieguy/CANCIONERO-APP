@@ -21,6 +21,7 @@ model User {
   emailVerified DateTime?
   image         String?
   theme         String    @default("dark") // dark | light | system
+  songPrefs     Json? // preferencias de lectura de canciones (ver src/lib/song-prefs.ts)
   currentTeamId String?
   createdAt     DateTime  @default(now())
 
@@ -184,6 +185,7 @@ model Song {
   key        String? // "G", "Bb", "F#m"
   bpm        Int?
   chordSheet String? // texto ChordPro
+  notes      String? // notas de la canción (texto, admite Markdown simple)
   tags       String? // CSV simple
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

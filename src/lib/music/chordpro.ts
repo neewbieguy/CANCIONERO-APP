@@ -117,6 +117,42 @@ export function transposeChordPro(source: string, semitones: number, targetKey?:
     .replace(/\{key:\s*([^}]+)\}/i, () => `{key: ${newKey}}`);
 }
 
+/** Convierte ChordPro a texto plano con los acordes arriba de la letra (para exportar). */
+export function toPlainText(source: string): string {
+  const sheet = parseChordPro(source);
+  const out: string[] = [];
+  const header = [sheet.meta.title, sheet.meta.artist].filter(Boolean).join(" - ");
+  if (header) out.push(header);
+  const info = [sheet.meta.key && `Tono: ${sheet.meta.key}`, sheet.meta.tempo && `BPM: ${sheet.meta.tempo}`].filter(Boolean);
+  if (info.length) out.push(info.join(" · "));
+  if (out.length) out.push("");
+
+  for (const section of sheet.sections) {
+    const label = section.label ?? (section.type !== "none" ? SECTION_LABELS[section.type] : null);
+    if (label) out.push(`[${label}]`);
+    for (const line of section.lines) {
+      if (line.type === "empty") out.push("");
+      else if (line.type === "comment") out.push(line.text);
+      else {
+        let chords = "";
+        let text = "";
+        for (const seg of line.segments) {
+          if (seg.chord) {
+            // Si el acorde anterior es más largo que la letra, se corre la letra
+            if (chords.length > text.length) text = text.padEnd(chords.length);
+            chords = chords.padEnd(text.length) + seg.chord + " ";
+          }
+          text += seg.text;
+        }
+        if (chords.trim()) out.push(chords.trimEnd());
+        if (text.trim()) out.push(text.trimEnd());
+      }
+    }
+    out.push("");
+  }
+  return out.join("\n").trim() + "\n";
+}
+
 /** Lista única de acordes usados, en orden de aparición. */
 export function chordsUsed(source: string): string[] {
   const seen = new Set<string>();

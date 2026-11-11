@@ -6,6 +6,7 @@ import {
   parseChordPro,
   parseLyricLine,
   toChordPro,
+  toPlainText,
   transposeChordPro,
 } from "@/lib/music/chordpro";
 
@@ -117,5 +118,19 @@ describe("importar acordes arriba de la letra", () => {
   it("toChordPro deja intacto un texto que ya es ChordPro", () => {
     const out = toChordPro("[G]Hola", { title: "X" });
     expect(out).toBe("{title: X}\n[G]Hola");
+  });
+});
+
+describe("toPlainText", () => {
+  it("pone los acordes arriba de la letra", () => {
+    const txt = toPlainText(SAMPLE);
+    expect(txt).toContain("Prueba - Banda");
+    expect(txt).toContain("Tono: G · BPM: 80");
+    expect(txt).toContain("[Verso 1]\nG    D\nHola mundo");
+    expect(txt).toContain("[Coro]\nC    G\nCoro aquí");
+  });
+
+  it("corre la letra si los acordes no entran", () => {
+    expect(toPlainText("[Gmaj7]a[D]b")).toBe("Gmaj7 D\na     b\n");
   });
 });
