@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { toChordPro } from "@/lib/music/chordpro";
+import { normalizeLyrics, toChordPro } from "@/lib/music/chordpro";
 import { can } from "@/lib/permissions";
 import { requireTeamContext, type TeamContext } from "@/lib/session";
 import { tagsToCsv } from "@/lib/songs";
@@ -46,7 +46,8 @@ const songSchema = z.object({
 export type SongInput = z.input<typeof songSchema>;
 
 function toData(input: z.output<typeof songSchema>) {
-  const sheet = input.chordSheet.trim();
+  // Limpia caracteres invisibles que vienen al pegar desde páginas web
+  const sheet = normalizeLyrics(input.chordSheet).trim();
   return {
     title: input.title,
     artist: input.artist,

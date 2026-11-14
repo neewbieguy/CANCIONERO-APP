@@ -5,24 +5,23 @@ import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
+  Columns2,
   ListMusic,
   Maximize,
   Minimize,
   Minus,
-  Pause,
-  Play,
   Plus,
   Sparkles,
-  Type,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { semitonesBetween, transposeKey } from "@/lib/music/transpose";
 import { cn } from "@/lib/utils";
-import { basePxPerSec, formatSpeed, useAutoScroll, useScrollSpeed } from "./auto-scroll";
-import { ChordSheet } from "./chord-sheet";
-import { FONT_MAX, FONT_MIN, useSheetPrefs } from "./song-viewer";
+import { basePxPerSec, useAutoScroll, useScrollSpeed } from "./auto-scroll";
+import { SheetBar } from "./sheet-bar";
+import { SongSections } from "./song-sections";
+import { STAGE_BASE_FONT, useSheetPrefs } from "./song-viewer";
 
 export type StageItem = {
   id: string;
@@ -83,9 +82,9 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
   const [offsets, setOffsets] = useState<Record<string, number>>(() =>
     Object.fromEntries(songs.map((s) => [s.id, s.key && s.song?.key ? semitonesBetween(s.song.key, s.key) : 0])),
   );
-  const { fontSize, setFontSize, showChords, setShowChords } = useSheetPrefs(24);
+  const { zoom, setZoom, showChords, setShowChords, twoColumns, setTwoColumns } = useSheetPrefs();
   const [scrolling, setScrolling] = useState(false);
-  const { speed, slower, faster, canSlower, canFaster } = useScrollSpeed();
+  const scroll = useScrollSpeed();
   const [listOpen, setListOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -117,7 +116,7 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
   useAutoScroll({
     target: scrollRef,
     playing: scrolling,
-    pxPerSec: basePxPerSec(song?.bpm) * speed,
+    pxPerSec: basePxPerSec(song?.bpm) * scroll.speed,
     onStop: () => setScrolling(false),
   });
 
@@ -211,85 +210,88 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
               <Plus />
             </Button>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <Type className="h-4 w-4 text-muted-foreground" aria-hidden />
-            <Button variant="outline" size="icon-sm" onClick={() => setFontSize((f) => Math.max(FONT_MIN, f - 2))} aria-label="Letra más chica">
-              <Minus />
-            </Button>
-            <Button variant="outline" size="icon-sm" onClick={() => setFontSize((f) => Math.min(FONT_MAX, f + 2))} aria-label="Letra más grande">
-              <Plus />
-            </Button>
-          </div>
-          <Button variant={showChords ? "secondary" : "outline"} size="sm" className="shrink-0" onClick={() => setShowChords(!showChords)}>
+          <Button
+            variant={showChords ? "secondary" : "outline"}
+            size="sm"
+            className="shrink-0"
+            onClick={() => setShowChords(!showChords)}
+            aria-pressed={showChords}
+          >
             Acordes
           </Button>
-          <div className="flex shrink-0 items-center gap-1">
-            <Button
-              variant={scrolling ? "default" : "outline"}
-              size="sm"
-              onClick={() => setScrolling(!scrolling)}
-              aria-label={scrolling ? "Pausar desplazamiento" : "Desplazamiento automático"}
-            >
-              {scrolling ? <Pause /> : <Play />} Auto
-            </Button>
-            <Button variant="outline" size="icon-sm" onClick={slower} aria-label="Más lento" disabled={!canSlower}>
-              <Minus />
-            </Button>
-            <span className="w-9 text-center text-xs tabular-nums text-muted-foreground">{formatSpeed(speed)}</span>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={faster}
-              aria-label="Más rápido"
-              disabled={!canFaster}
-            >
-              <Plus />
-            </Button>
-          </div>
+          {/* Dos columnas: solo sirve en pantallas anchas (tablet o atril horizontal) */}
+          <Button
+            variant={twoColumns ? "secondary" : "outline"}
+            size="sm"
+            className="hidden shrink-0 lg:inline-flex"
+            onClick={() => setTwoColumns(!twoColumns)}
+            aria-pressed={twoColumns}
+          >
+            <Columns2 /> 2 columnas
+          </Button>
         </div>
       </header>
 
       {/* Hoja */}
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10" onClick={() => scrolling && setScrolling(false)}>
-        <div className="mx-auto max-w-5xl">
-          {(song?.artist || current?.notes) && (
-            <p className="mb-4 text-sm text-muted-foreground">
-              {[song?.artist, current?.notes && `📝 ${current.notes}`].filter(Boolean).join(" · ")}
-            </p>
-          )}
-          {song?.chordSheet?.trim() ? (
-            <ChordSheet
-              source={song.chordSheet}
-              semitones={semitones}
-              targetKey={currentKey ?? undefined}
-              showChords={showChords}
-              fontSize={fontSize}
-            />
-          ) : (
-            <p className="text-muted-foreground">Esta canción no tiene letra ni acordes cargados.</p>
-          )}
+      <div className="relative min-h-0 flex-1">
+        <div ref={scrollRef} className="h-full overflow-y-auto px-3 pb-6 md:px-8" onClick={() => scrolling && setScrolling(false)}>
+          <div className={cn("mx-auto", twoColumns ? "max-w-7xl" : "max-w-5xl")}>
+            {(song?.artist || current?.notes) && (
+              <p className="pt-3 text-sm text-muted-foreground">
+                {[song?.artist, current?.notes && `📝 ${current.notes}`].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {song?.chordSheet?.trim() ? (
+              <SongSections
+                key={song.id}
+                variant="stage"
+                source={song.chordSheet}
+                semitones={semitones}
+                targetKey={currentKey ?? undefined}
+                showChords={showChords}
+                columns={twoColumns}
+                fontSize={Math.round(STAGE_BASE_FONT * zoom)}
+                stickyNav
+                navClassName="-mx-3 px-3 md:-mx-8 md:px-8"
+                scrollRoot={scrollRef}
+                instantJump={scrolling}
+              />
+            ) : (
+              <p className="pt-6 text-muted-foreground">Esta canción no tiene letra ni acordes cargados.</p>
+            )}
 
-          {upNext.length > 0 && (
-            <div className="mt-10 space-y-1 border-t pt-4 text-sm text-muted-foreground">
-              <p className="text-xs uppercase tracking-wide">Después</p>
-              {upNext.map((i) => (
-                <p key={i.id} className="flex items-center gap-2">
-                  {i.type === "song" ? (
-                    <>
-                      <ChevronRight className="h-4 w-4" /> {i.song?.title ?? "Canción eliminada"}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" /> {i.title}
-                      {i.durationMin ? ` (${i.durationMin} min)` : ""}
-                    </>
-                  )}
-                </p>
-              ))}
-            </div>
-          )}
-          <div className="h-[40vh]" aria-hidden />
+            {upNext.length > 0 && (
+              <div className="mt-10 space-y-1 border-t pt-4 text-sm text-muted-foreground">
+                <p className="text-xs uppercase tracking-wide">Después</p>
+                {upNext.map((i) => (
+                  <p key={i.id} className="flex items-center gap-2">
+                    {i.type === "song" ? (
+                      <>
+                        <ChevronRight className="h-4 w-4" /> {i.song?.title ?? "Canción eliminada"}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" /> {i.title}
+                        {i.durationMin ? ` (${i.durationMin} min)` : ""}
+                      </>
+                    )}
+                  </p>
+                ))}
+              </div>
+            )}
+            <div className="h-[40vh]" aria-hidden />
+          </div>
         </div>
+
+        {/* Barra flotante: zoom de la letra y desplazamiento automático */}
+        <SheetBar
+          zoom={zoom}
+          onZoom={setZoom}
+          playing={scrolling}
+          onPlayingChange={setScrolling}
+          scroll={scroll}
+          className="absolute bottom-3 left-1/2 -translate-x-1/2"
+        />
       </div>
 
       {/* Anterior / siguiente */}

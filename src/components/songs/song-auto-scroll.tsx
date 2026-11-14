@@ -1,54 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Minus, Pause, Play, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { basePxPerSec, formatSpeed, useAutoScroll, useScrollSpeed } from "./auto-scroll";
-import { useSongView } from "./song-view";
+import { useState } from "react";
+import { FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/song-prefs";
+import { basePxPerSec, useAutoScroll, useScrollSpeed } from "./auto-scroll";
+import { SheetBar, nearestZoom } from "./sheet-bar";
+import { useSongPrefs } from "./song-prefs";
+
+/** Tamaño de letra (px) que corresponde a 1× en la pantalla de la canción. */
+export const SONG_BASE_FONT = 16;
 
 /**
- * Barra flotante del desplazamiento automático en la pantalla de la canción.
- * Aparece al activar el botón de flechas de la cápsula de acciones.
+ * Barra flotante de la pantalla de la canción: zoom de la letra y desplazamiento automático.
+ * El zoom usa la misma preferencia "tamaño de letra" del modal de Preferencias.
  */
 export function SongAutoScroll({ bpm }: { bpm: number | null }) {
-  const { autoScroll, setAutoScroll } = useSongView();
-  const { speed, slower, faster, canSlower, canFaster } = useScrollSpeed();
+  const { prefs, setPref } = useSongPrefs();
+  const scroll = useScrollSpeed();
   const [playing, setPlaying] = useState(false);
-
-  // Al apagar el botón se oculta la barra y se frena
-  useEffect(() => {
-    if (!autoScroll) setPlaying(false);
-  }, [autoScroll]);
 
   useAutoScroll({
     target: "window",
     playing,
-    pxPerSec: basePxPerSec(bpm) * speed,
+    pxPerSec: basePxPerSec(bpm) * scroll.speed,
     onStop: () => setPlaying(false),
   });
 
-  if (!autoScroll) return null;
-
   return (
-    <div
-      role="toolbar"
-      aria-label="Desplazamiento automático"
-      onKeyDown={(e) => e.key === "Escape" && setAutoScroll(false)}
-      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border bg-card/95 p-1.5 shadow-lg backdrop-blur animate-in fade-in-0 slide-in-from-bottom-2 md:bottom-6 md:left-[calc(50%+36px)]"
-    >
-      <Button variant="ghost" size="icon" className="rounded-full" onClick={slower} disabled={!canSlower} aria-label="Más lento">
-        <Minus />
-      </Button>
-      <span className="min-w-12 text-center font-mono text-sm font-semibold tabular-nums" aria-live="polite" aria-label={`Velocidad ${formatSpeed(speed)}`}>
-        {formatSpeed(speed)}
-      </span>
-      <Button variant="ghost" size="icon" className="rounded-full" onClick={faster} disabled={!canFaster} aria-label="Más rápido">
-        <Plus />
-      </Button>
-      <Button className="ml-1 min-w-32 rounded-full" onClick={() => setPlaying((p) => !p)} aria-pressed={playing}>
-        {playing ? <Pause /> : <Play />}
-        {playing ? "Pausar" : "Reproducir"}
-      </Button>
-    </div>
+    <SheetBar
+      zoom={nearestZoom(prefs.fontSize / SONG_BASE_FONT)}
+      onZoom={(z) => setPref("fontSize", Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, Math.round(z * SONG_BASE_FONT))))}
+      playing={playing}
+      onPlayingChange={setPlaying}
+      scroll={scroll}
+      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 md:bottom-6 md:left-[calc(50%+36px)]"
+    />
   );
 }

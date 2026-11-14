@@ -22,9 +22,6 @@ type SongView = {
   shift: (n: number) => void;
   setCapo: (capo: number) => void;
   reset: () => void;
-  /** Botón de desplazamiento automático encendido (muestra la barra flotante). */
-  autoScroll: boolean;
-  setAutoScroll: (on: boolean) => void;
 };
 
 const SongViewContext = createContext<SongView | null>(null);
@@ -59,7 +56,6 @@ export function SongViewProvider({
   const [currentKey, setCurrentKey] = useState<string | null>(startKey);
   const [rawSemitones, setRawSemitones] = useState(0);
   const [capo, setCapoState] = useState(0);
-  const [autoScroll, setAutoScroll] = useState(false);
 
   const semitones = originalKey && currentKey ? semitonesBetween(originalKey, currentKey) : rawSemitones;
 
@@ -90,10 +86,8 @@ export function SongViewProvider({
       shift,
       setCapo,
       reset,
-      autoScroll,
-      setAutoScroll,
     }),
-    [originalKey, currentKey, semitones, capo, setKeyRoot, shift, setCapo, reset, autoScroll],
+    [originalKey, currentKey, semitones, capo, setKeyRoot, shift, setCapo, reset],
   );
 
   return <SongViewContext.Provider value={value}>{children}</SongViewContext.Provider>;

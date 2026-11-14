@@ -2,7 +2,7 @@
 
 import { forwardRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Pencil, SlidersHorizontal } from "lucide-react";
+import { Pencil, SlidersHorizontal } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -88,10 +88,10 @@ function KeyButton() {
 }
 
 /**
- * Cápsula de acciones de la canción: desplazamiento, tono, preferencias y editar.
+ * Cápsula de acciones de la canción: tono, preferencias y editar.
+ * (El zoom y el desplazamiento automático están en la barra flotante de abajo.)
  */
 export function SongToolbar({ song, canEdit }: { song: PrefsSong; canEdit: boolean }) {
-  const { autoScroll, setAutoScroll } = useSongView();
   const [prefsOpen, setPrefsOpen] = useState(false);
   return (
     <div
@@ -99,9 +99,6 @@ export function SongToolbar({ song, canEdit }: { song: PrefsSong; canEdit: boole
       aria-label="Acciones de la canción"
       className="inline-flex max-w-full shrink-0 items-center gap-0.5 self-start rounded-full border bg-card p-1 shadow-sm"
     >
-      <PillButton label="Desplazamiento automático" active={autoScroll} aria-pressed={autoScroll} onClick={() => setAutoScroll(!autoScroll)}>
-        <ArrowUpDown />
-      </PillButton>
       <KeyButton />
       <PillButton label="Preferencias" aria-haspopup="dialog" aria-expanded={prefsOpen} onClick={() => setPrefsOpen(true)}>
         <SlidersHorizontal />

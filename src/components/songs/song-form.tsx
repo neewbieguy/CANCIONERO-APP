@@ -1,19 +1,19 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Loader2, PencilLine } from "lucide-react";
+import { Eye, Loader2, PencilLine, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toChordPro } from "@/lib/music/chordpro";
+import { normalizeLyrics, parseSectionHeader, toChordPro } from "@/lib/music/chordpro";
 import { ALL_KEYS } from "@/lib/music/transpose";
 import { parseTags } from "@/lib/songs";
 import { cn } from "@/lib/utils";
 import { createSong, updateSong } from "@/server/actions/songs";
-import { ChordSheet } from "./chord-sheet";
+import { SongSections } from "./song-sections";
 
 export type SongFormValues = {
   title: string;
@@ -34,6 +34,19 @@ Coro
 C        G
 Cantaré, cantaré`;
 
+/** Encabezados que se insertan con un clic. Los "numbered" se numeran solos (Verso 1, Verso 2...). */
+const SECTION_BUTTONS = [
+  { name: "Intro" },
+  { name: "Verso", numbered: true },
+  { name: "Pre-coro" },
+  { name: "Coro" },
+  { name: "Puente" },
+  { name: "Interludio" },
+  { name: "Instrumental" },
+  { name: "Tag" },
+  { name: "Final" },
+];
+
 const selectClass =
   "flex h-10 w-full rounded-xl border border-input bg-background px-3 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm";
 
@@ -45,14 +58,49 @@ export function SongForm({ mode, songId, initial }: { mode: "create" | "edit"; s
   const [key, setKey] = useState(initial?.key ?? "");
   const [bpm, setBpm] = useState(initial?.bpm ? String(initial.bpm) : "");
   const [tags, setTags] = useState(parseTags(initial?.tags).join(", "));
-  const [sheet, setSheet] = useState(initial?.chordSheet ?? "");
+  // normalizeLyrics quita los caracteres invisibles que vienen al pegar desde páginas web
+  const [sheet, setSheet] = useState(normalizeLyrics(initial?.chordSheet ?? ""));
   const [tab, setTab] = useState<"edit" | "preview">("edit");
+
+  const sheetRef = useRef<HTMLTextAreaElement>(null);
 
   const preview = useMemo(() => (sheet.trim() ? toChordPro(sheet) : ""), [sheet]);
 
+  /** Inserta un encabezado de sección en su propia línea, donde está el cursor. */
+  const insertHeader = ({ name, numbered }: (typeof SECTION_BUTTONS)[number]) => {
+    const el = sheetRef.current;
+    const at = el ? el.selectionStart : sheet.length;
+    // Nunca se parte una línea al medio: va antes de la línea (cursor al principio) o después
+    const lineStart = sheet.lastIndexOf("\n", at - 1) + 1;
+    const lineEnd = sheet.indexOf("\n", at);
+    const pos = at === lineStart ? lineStart : lineEnd === -1 ? sheet.length : lineEnd + 1;
+    let before = sheet.slice(0, pos);
+    const after = sheet.slice(pos);
+    if (before && !before.endsWith("\n")) before += "\n";
+    let title = name;
+    if (numbered) {
+      // Cuenta los que ya hay arriba, escritos como "Verso 1" o guardados como {start_of_verse: Verso 1}
+      const used = before.split("\n").filter((l) => {
+        const text = /^\s*\{start_of_\w+:\s*(.*)\}\s*$/.exec(l)?.[1] ?? l;
+        return parseSectionHeader(text)?.label.toLowerCase().startsWith(name.toLowerCase());
+      }).length;
+      title = `${name} ${used + 1}`;
+    }
+    // Una línea en blanco antes (si hay texto arriba) y el cursor queda en la línea de abajo
+    const gap = before.trim() === "" || before.endsWith("\n\n") ? "" : "\n";
+    const inserted = `${gap}${title}\n`;
+    setSheet(before + inserted + after);
+    setTab("edit");
+    const caret = before.length + inserted.length;
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(caret, caret);
+    });
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const input = { title, artist, key, bpm: bpm || null, tags: parseTags(tags), chordSheet: sheet };
+    const input = { title, artist, key, bpm: bpm || null, tags: parseTags(tags), chordSheet: normalizeLyrics(sheet) };
     start(async () => {
       if (mode === "create") {
         const res = await createSong(input);
@@ -129,20 +177,35 @@ export function SongForm({ mode, songId, initial }: { mode: "create" | "edit"; s
           ChordPro (<code className="rounded bg-muted px-1">[G]Tu amor</code>). Las líneas &quot;Verso&quot;, &quot;Coro&quot; o
           &quot;Puente&quot; marcan las secciones.
         </p>
+        <div role="group" aria-label="Insertar sección" className={cn("flex flex-wrap gap-1.5", tab === "preview" && "hidden lg:flex")}>
+          {SECTION_BUTTONS.map((b) => (
+            <button
+              key={b.name}
+              type="button"
+              onClick={() => insertHeader(b)}
+              aria-label={`Insertar sección ${b.name}`}
+              className="inline-flex h-9 items-center gap-1 rounded-full border bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Plus className="h-3 w-3" aria-hidden />
+              {b.name}
+            </button>
+          ))}
+        </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <Textarea
             id="sheet"
+            ref={sheetRef}
             value={sheet}
-            onChange={(e) => setSheet(e.target.value)}
+            onChange={(e) => setSheet(normalizeLyrics(e.target.value))}
             placeholder={EXAMPLE}
             spellCheck={false}
             className={cn("min-h-[420px] font-mono text-sm leading-relaxed", tab === "preview" && "hidden lg:block")}
           />
-          <div className={cn("min-h-[200px] overflow-auto rounded-xl border bg-muted/20 p-4 lg:max-h-[600px]", tab === "edit" && "hidden lg:block")}>
+          <div className={cn("min-h-[200px] overflow-auto rounded-xl border bg-background px-3 pb-3 lg:max-h-[600px]", tab === "edit" && "hidden lg:block")}>
             {preview ? (
-              <ChordSheet source={preview} fontSize={15} />
+              <SongSections source={preview} fontSize={15} nav={false} />
             ) : (
-              <p className="text-sm text-muted-foreground">Acá vas a ver cómo queda.</p>
+              <p className="pt-3 text-sm text-muted-foreground">Acá vas a ver cómo queda.</p>
             )}
           </div>
         </div>

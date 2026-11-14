@@ -27,6 +27,16 @@
     --input: 220 13% 87%;
     --ring: 217 90% 53%;
     --radius: 0.875rem;
+
+    /* Colores por tipo de sección de una canción (texto y bordes sobre fondo claro) */
+    --sec-verse: 201 90% 32%;
+    --sec-prechorus: 262 55% 48%;
+    --sec-chorus: 22 90% 37%;
+    --sec-bridge: 162 80% 26%;
+    --sec-instrumental: 220 12% 38%;
+    --sec-ending: 335 70% 42%;
+    --sec-none: 217 85% 45%;
+    --sec: var(--sec-none);
   }
 
   /* Tema oscuro (por defecto) — fondo #0f1012, tarjetas #17181b, acento #1b6ef3 */
@@ -52,6 +62,15 @@
     --border: 228 7% 17%;
     --input: 228 7% 19%;
     --ring: 217 90% 53%;
+
+    /* Colores por tipo de sección (más claros, sobre fondo oscuro) */
+    --sec-verse: 199 90% 66%;
+    --sec-prechorus: 262 90% 78%;
+    --sec-chorus: 25 95% 68%;
+    --sec-bridge: 158 60% 56%;
+    --sec-instrumental: 220 14% 72%;
+    --sec-ending: 335 85% 74%;
+    --sec-none: 217 95% 70%;
   }
 }
 

@@ -113,7 +113,7 @@ export default async function CancionPage({
             )}
           </div>
         </div>
-        <SongAutoScroll bpm={song.bpm} />
+        {song.chordSheet?.trim() && <SongAutoScroll bpm={song.bpm} />}
       </SongViewProvider>
     </SongPrefsProvider>
   );

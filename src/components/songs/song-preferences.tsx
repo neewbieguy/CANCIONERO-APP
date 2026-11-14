@@ -231,7 +231,7 @@ function MainScreen({ song, canEdit, go }: { song: PrefsSong; canEdit: boolean; 
           />
           <ToggleRow
             label="Vista compacta"
-            description="Condensada: ignora la estructura (sin títulos de sección ni espacios)."
+            description="Condensada: tarjetas más apretadas y sin líneas en blanco."
             checked={prefs.compact}
             onChange={(v) => setPref("compact", v)}
           />

@@ -23,6 +23,8 @@ const config: Config = {
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
+        // Color de la sección de una canción (lo define cada tarjeta con --sec)
+        section: "hsl(var(--sec) / <alpha-value>)",
       },
       borderRadius: {
         "2xl": "1.25rem",
