@@ -32,7 +32,7 @@ export function SongAutoScroll({ bpm }: { bpm: number | null }) {
       playing={playing}
       onPlayingChange={setPlaying}
       scroll={scroll}
-      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 md:bottom-6 md:left-[calc(50%+36px)]"
+      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] md:left-[calc(50%+36px)]"
     />
   );
 }

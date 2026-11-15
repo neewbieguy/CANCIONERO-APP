@@ -5,6 +5,13 @@ import { Toaster as Sonner } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
+const SAFE_OFFSET = {
+  top: "calc(max(env(safe-area-inset-top), 12px) + 8px)",
+  bottom: "calc(max(env(safe-area-inset-bottom), 12px) + 8px)",
+  left: "max(env(safe-area-inset-left), 16px)",
+  right: "max(env(safe-area-inset-right), 16px)",
+}
+
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
 
@@ -12,6 +19,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // iPhone: debajo del notch / Dynamic Island y arriba de la barra de inicio (también en horizontal)
+      offset={SAFE_OFFSET}
+      mobileOffset={SAFE_OFFSET}
       toastOptions={{
         classNames: {
           toast:

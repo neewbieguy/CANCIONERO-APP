@@ -23,7 +23,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col items-center border-r bg-card/60 py-4 backdrop-blur md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[calc(72px+env(safe-area-inset-left))] flex-col pl-[env(safe-area-inset-left)] items-center border-r bg-card/60 py-4 backdrop-blur md:flex">
       <Link href="/" className="mb-6" aria-label="Cancionero — inicio">
         <LogoMark className="h-10 w-10" />
       </Link>

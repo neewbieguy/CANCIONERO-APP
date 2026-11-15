@@ -70,7 +70,7 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
   return (
     <section className="overflow-hidden rounded-2xl border bg-card">
       <div className="flex flex-col gap-4 border-b p-5 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary">
               Próximo evento · {relativeDay(event.date)}
@@ -79,7 +79,7 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
               {templateLabel(event.template)}
             </span>
           </div>
-          <h2 className="text-xl font-semibold">{event.title}</h2>
+          <h2 className="break-words text-xl font-semibold">{event.title}</h2>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4" /> {formatEventDate(event.date)}
@@ -107,8 +107,9 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
         </div>
       </div>
 
-      <div className="grid gap-0 md:grid-cols-[1fr_280px]">
-        <div className="p-5">
+      {/* minmax(0,1fr) y min-w-0: sin esto un correo largo ensancha la tarjeta en el celular */}
+      <div className="grid grid-cols-1 gap-0 md:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="min-w-0 p-5">
           <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Setlist · {songs} {songs === 1 ? "canción" : "canciones"}
           </p>
@@ -122,8 +123,8 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
           ) : (
             <ol className="space-y-1">
               {items.map((item, i) => (
-                <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-accent/50">
-                  <span className="w-5 text-right font-mono text-xs text-muted-foreground">{i + 1}</span>
+                <li key={item.id} className="flex min-w-0 items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-accent/50">
+                  <span className="w-5 shrink-0 text-right font-mono text-xs text-muted-foreground">{i + 1}</span>
                   {item.type === "song" ? (
                     <>
                       <span className="min-w-0 flex-1 truncate text-sm">
@@ -143,7 +144,7 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
                     </>
                   ) : (
                     <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-muted-foreground">
-                      <Sparkles className="h-3.5 w-3.5" /> {item.title}
+                      <Sparkles className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{item.title}</span>
                     </span>
                   )}
                 </li>
@@ -155,7 +156,7 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
           )}
         </div>
 
-        <div className="space-y-4 border-t p-5 md:border-l md:border-t-0">
+        <div className="min-w-0 space-y-4 border-t p-5 md:border-l md:border-t-0">
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Equipo · {confirmed}/{event.participants.length} confirmados
@@ -167,8 +168,8 @@ export function NextEventCard({ event, userId }: { event: NonNullable<DashboardD
                 <AvatarStack users={event.participants.map((p) => p.user)} max={6} />
                 <ul className="mt-3 space-y-1.5">
                   {event.participants.slice(0, 4).map((p) => (
-                    <li key={p.id} className="flex items-center gap-2 text-sm">
-                      <Mic2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    <li key={p.id} className="flex min-w-0 items-center gap-2 text-sm">
+                      <Mic2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 flex-1 truncate">
                         {p.user.name ?? p.user.email}
                         <span className="text-muted-foreground"> · {p.role}</span>

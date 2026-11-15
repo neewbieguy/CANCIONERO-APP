@@ -80,18 +80,16 @@ export default async function EquipoPage() {
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <UserAvatar user={m.user} className="h-10 w-10" />
                   <div className="min-w-0">
-                    <p className="flex items-center gap-2 truncate font-medium">
-                      <span className="truncate">
-                        {name}
-                        {isSelf && <span className="text-muted-foreground"> (vos)</span>}
-                      </span>
+                    <p className="flex min-w-0 items-center gap-2 font-medium">
+                      <span className="truncate">{name}</span>
+                      {isSelf && <span className="-ml-1 shrink-0 font-normal text-muted-foreground">(vos)</span>}
                       {isAdminMember && <Badge variant="secondary">Admin</Badge>}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {m.instrument ?? (isSelf ? "Sin instrumento · usá ⋯ para agregarlo" : "Sin instrumento")}
                     </p>
                   </div>
-                  <div className="ml-auto md:hidden">
+                  <div className="ml-auto shrink-0 md:hidden">
                     <MemberActions
                       userId={m.userId}
                       name={firstName}

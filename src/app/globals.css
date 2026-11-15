@@ -87,12 +87,35 @@
   }
 }
 
+/* Solo opacidad y escala: lo anima la GPU, sin JavaScript ni re-renders por pulso */
+@keyframes bpm-pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  30%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.75);
+  }
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
   .pt-safe {
     padding-top: env(safe-area-inset-top);
+  }
+  /* Luz del metrónomo del Modo Atril: la duración (60 / BPM) la pone el componente */
+  .bpm-light {
+    animation: bpm-pulse 1s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bpm-light {
+      display: none;
+      animation: none;
+    }
   }
   .scrollbar-none {
     scrollbar-width: none;

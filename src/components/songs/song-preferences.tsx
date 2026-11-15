@@ -76,7 +76,7 @@ export function SongPreferences({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto rounded-t-2xl" aria-describedby={undefined}>
           {header(SheetTitle)}
-          <div className="pb-safe">{body}</div>
+          {body}
         </SheetContent>
       </Sheet>
     );

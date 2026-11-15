@@ -15,7 +15,7 @@ export function StatusBadge({ status, className, compact }: { status: string; cl
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
         STYLES[s],
         compact && "h-5 w-5 justify-center p-0",
         className,
@@ -33,7 +33,7 @@ export function KeyBadge({ musicalKey, className }: { musicalKey?: string | null
   return (
     <span
       className={cn(
-        "inline-flex min-w-8 items-center justify-center rounded-lg bg-primary/15 px-1.5 py-0.5 font-mono text-xs font-semibold text-primary",
+        "inline-flex min-w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 px-1.5 py-0.5 font-mono text-xs font-semibold text-primary",
         className,
       )}
     >

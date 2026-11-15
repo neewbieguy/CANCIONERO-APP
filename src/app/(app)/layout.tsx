@@ -40,7 +40,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <LiveUpdates />
       <Sidebar user={avatarUser} teams={teams} currentTeamId={team.id} />
 
-      <div className="md:pl-[72px]">
+      {/* En horizontal el notch queda a un costado: se deja ese margen */}
+      <div className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] md:pl-[calc(72px+env(safe-area-inset-left))]">
         <header className="pt-safe sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 md:px-8">
             <Link href="/" className="md:hidden" aria-label="Inicio">

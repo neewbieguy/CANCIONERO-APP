@@ -35,7 +35,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${fontSans.variable} font-sans`}>
+      {/* overflow-x-clip: red de seguridad, nada genera scroll horizontal en el celular */}
+      <body className={`${fontSans.variable} overflow-x-clip font-sans`}>
         <Providers>{children}</Providers>
       </body>
     </html>

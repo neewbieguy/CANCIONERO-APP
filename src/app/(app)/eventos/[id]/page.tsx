@@ -89,7 +89,7 @@ export default async function EventoPage({ params }: { params: { id: string } })
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-5">
           <SetlistEditor
             eventId={event.id}
@@ -106,7 +106,7 @@ export default async function EventoPage({ params }: { params: { id: string } })
             }))}
           />
         </div>
-        <aside className="space-y-5">
+        <aside className="min-w-0 space-y-5">
           <ParticipantsPanel
             eventId={event.id}
             currentUserId={ctx.user.id}

@@ -62,15 +62,23 @@ function Clock() {
   return <span className="font-mono text-sm tabular-nums text-muted-foreground">{now}</span>;
 }
 
-/** Punto que titila al ritmo del BPM. */
-function BpmPulse({ bpm }: { bpm: number }) {
+/**
+ * Metrónomo visual: el número de BPM y una luz que pulsa al compás.
+ * Es una animación CSS (ver .bpm-light en globals.css): no usa timers ni vuelve a dibujar por pulso.
+ * Con "reducir movimiento" activado queda solo el número.
+ */
+function BpmLight({ bpm }: { bpm: number }) {
+  const beat = 60 / Math.min(300, Math.max(20, bpm));
   return (
-    <span className="relative inline-flex h-2.5 w-2.5" title={`${bpm} BPM`}>
-      <span
-        className="absolute inline-flex h-full w-full rounded-full bg-primary"
-        style={{ animation: `stage-pulse ${60 / bpm}s ease-out infinite` }}
-      />
-      <style>{`@keyframes stage-pulse{0%{opacity:1;transform:scale(1)}60%,100%{opacity:.15;transform:scale(.6)}}`}</style>
+    <span
+      role="img"
+      aria-label={`${bpm} BPM`}
+      title={`${bpm} BPM`}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-background/60 px-2 py-1 font-mono text-xs font-semibold tabular-nums"
+    >
+      <span className="bpm-light h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" style={{ animationDuration: `${beat}s` }} aria-hidden />
+      {bpm}
+      <span className="hidden font-sans font-normal text-muted-foreground sm:inline">BPM</span>
     </span>
   );
 }
@@ -170,7 +178,7 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
   }
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background">
+    <div className="flex h-dvh flex-col overflow-hidden bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       {/* Barra superior */}
       <header className="pt-safe shrink-0 border-b bg-card/80 backdrop-blur">
         <div className="flex h-14 items-center gap-2 px-2 md:px-4">
@@ -183,11 +191,10 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
             <p className="truncate text-xs text-muted-foreground">
               {eventTitle} · {index + 1}/{songs.length}
             </p>
-            <p className="flex items-center gap-2 truncate font-semibold">
-              {song?.title}
-              {song?.bpm ? <BpmPulse bpm={song.bpm} /> : null}
-            </p>
+            <p className="truncate font-semibold">{song?.title}</p>
           </button>
+          {/* Fuera del título para que no se recorte; key reinicia el pulso al cambiar de canción */}
+          {song?.bpm ? <BpmLight key={song.id} bpm={song.bpm} /> : null}
           <div className="hidden sm:block">
             <Clock />
           </div>
@@ -295,7 +302,7 @@ export function StageMode({ eventId, eventTitle, items }: { eventId: string; eve
       </div>
 
       {/* Anterior / siguiente */}
-      <footer className="pb-safe grid shrink-0 grid-cols-2 gap-2 border-t bg-card/80 p-2 backdrop-blur">
+      <footer className="grid shrink-0 grid-cols-2 gap-2 border-t bg-card/80 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur">
         <Button variant="secondary" size="lg" disabled={index === 0} onClick={() => go(index - 1)} className="justify-start">
           <ChevronLeft />
           <span className="truncate">{index > 0 ? songs[index - 1].song?.title : "Anterior"}</span>

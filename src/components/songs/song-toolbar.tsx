@@ -67,9 +67,7 @@ function KeyButton() {
             <SheetHeader className="mb-4">
               <SheetTitle>Tono</SheetTitle>
             </SheetHeader>
-            <div className="pb-safe">
-              <KeyPicker />
-            </div>
+            <KeyPicker />
           </SheetContent>
         </Sheet>
       </>

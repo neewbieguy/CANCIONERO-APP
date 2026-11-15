@@ -19,7 +19,7 @@ export function MobileNav() {
   const tab = "flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium text-muted-foreground";
 
   return (
-    <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t bg-card/90 backdrop-blur md:hidden">
+    <nav className="pb-safe fixed inset-x-0 bottom-0 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] z-40 border-t bg-card/90 backdrop-blur md:hidden">
       <div className="flex">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
